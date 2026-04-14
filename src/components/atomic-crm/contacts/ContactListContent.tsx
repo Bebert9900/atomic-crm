@@ -19,6 +19,7 @@ import { RotateCcw } from "lucide-react";
 
 import { Status } from "../misc/Status";
 import { formatRelativeDate } from "../misc/RelativeDate";
+import { RecordButton } from "../recordings/RecordButton";
 import type { Contact } from "../types";
 import { Avatar } from "./Avatar";
 import { TagsList } from "./TagsList";
@@ -171,6 +172,10 @@ const ContactItemContent = ({
           </div>
         )}
       </Link>
+      <RecordButton
+        contactId={contact.id as number}
+        contactName={`${contact.first_name} ${contact.last_name ?? ""}`}
+      />
     </div>
   );
 };

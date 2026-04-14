@@ -98,6 +98,14 @@ grant all on table public.tasks to anon;
 grant all on table public.tasks to authenticated;
 grant all on table public.tasks to service_role;
 
+grant all on table public.contact_recordings to anon;
+grant all on table public.contact_recordings to authenticated;
+grant all on table public.contact_recordings to service_role;
+
+grant all on table public.appointments to anon;
+grant all on table public.appointments to authenticated;
+grant all on table public.appointments to service_role;
+
 grant all on table public.configuration to anon;
 grant all on table public.configuration to authenticated;
 grant all on table public.configuration to service_role;
@@ -131,6 +139,14 @@ grant all on sequence public.companies_id_seq to service_role;
 grant all on sequence public."contactNotes_id_seq" to anon;
 grant all on sequence public."contactNotes_id_seq" to authenticated;
 grant all on sequence public."contactNotes_id_seq" to service_role;
+
+grant all on sequence public.contact_recordings_id_seq to anon;
+grant all on sequence public.contact_recordings_id_seq to authenticated;
+grant all on sequence public.contact_recordings_id_seq to service_role;
+
+grant all on sequence public.appointments_id_seq to anon;
+grant all on sequence public.appointments_id_seq to authenticated;
+grant all on sequence public.appointments_id_seq to service_role;
 
 grant all on sequence public.contacts_id_seq to anon;
 grant all on sequence public.contacts_id_seq to authenticated;

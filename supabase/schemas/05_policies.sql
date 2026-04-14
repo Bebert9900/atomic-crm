@@ -60,6 +60,20 @@ create policy "Enable insert for authenticated users only" on public.tasks for i
 create policy "Task Update Policy" on public.tasks for update to authenticated using (true);
 create policy "Task Delete Policy" on public.tasks for delete to authenticated using (true);
 
+-- Appointments
+alter table public.appointments enable row level security;
+create policy "Enable read access for authenticated users" on public.appointments for select to authenticated using (true);
+create policy "Enable insert for authenticated users only" on public.appointments for insert to authenticated with check (true);
+create policy "Appointment Update Policy" on public.appointments for update to authenticated using (true);
+create policy "Appointment Delete Policy" on public.appointments for delete to authenticated using (true);
+
+-- Contact Recordings
+alter table public.contact_recordings enable row level security;
+create policy "Enable read access for authenticated users" on public.contact_recordings for select to authenticated using (true);
+create policy "Enable insert for authenticated users only" on public.contact_recordings for insert to authenticated with check (true);
+create policy "Contact Recordings Update Policy" on public.contact_recordings for update to authenticated using (true);
+create policy "Contact Recordings Delete Policy" on public.contact_recordings for delete to authenticated using (true);
+
 -- Configuration (admin-only for writes)
 create policy "Enable read for authenticated" on public.configuration for select to authenticated using (true);
 create policy "Enable insert for admins" on public.configuration for insert to authenticated with check (public.is_admin());

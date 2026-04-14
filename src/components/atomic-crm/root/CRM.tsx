@@ -15,6 +15,7 @@ import { ForgotPasswordPage } from "@/components/supabase/forgot-password-page";
 import { SetPasswordPage } from "@/components/supabase/set-password-page";
 import { OAuthConsentPage } from "@/components/supabase/oauth-consent-page";
 
+import appointments from "../appointments";
 import companies from "../companies";
 import contacts from "../contacts";
 import { Dashboard } from "../dashboard/Dashboard";
@@ -267,8 +268,10 @@ const DesktopAdmin = (
       <Resource name="contacts" {...contacts} />
       <Resource name="companies" {...companies} />
       <Resource name="contact_notes" />
+      <Resource name="contact_recordings" />
       <Resource name="deal_notes" />
       <Resource name="tasks" />
+      <Resource name="appointments" {...appointments} />
       <Resource name="sales" {...sales} />
       <Resource name="tags" />
     </Admin>
@@ -336,6 +339,7 @@ const MobileAdmin = (
         </Resource>
         <Resource name="companies" show={CompanyShow} />
         <Resource name="tasks" list={MobileTasksList} />
+        <Resource name="appointments" {...appointments} />
       </Admin>
     </PersistQueryClientProvider>
   );

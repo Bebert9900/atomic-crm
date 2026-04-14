@@ -198,6 +198,22 @@
           "type": "registry:component"
         },
         {
+          "path": "src/components/atomic-crm/recordings/useAudioRecorder.ts",
+          "type": "registry:component"
+        },
+        {
+          "path": "src/components/atomic-crm/recordings/RecordButton.tsx",
+          "type": "registry:component"
+        },
+        {
+          "path": "src/components/atomic-crm/recordings/ContactRecordingsList.tsx",
+          "type": "registry:component"
+        },
+        {
+          "path": "src/components/atomic-crm/recordings/AudioRecorderDialog.tsx",
+          "type": "registry:component"
+        },
+        {
           "path": "src/components/atomic-crm/providers/types.ts",
           "type": "registry:component"
         },
@@ -791,6 +807,34 @@
         },
         {
           "path": "src/components/atomic-crm/companies/AutocompleteCompanyInput.tsx",
+          "type": "registry:component"
+        },
+        {
+          "path": "src/components/atomic-crm/appointments/index.tsx",
+          "type": "registry:component"
+        },
+        {
+          "path": "src/components/atomic-crm/appointments/ContactAppointmentsList.tsx",
+          "type": "registry:component"
+        },
+        {
+          "path": "src/components/atomic-crm/appointments/AppointmentList.tsx",
+          "type": "registry:component"
+        },
+        {
+          "path": "src/components/atomic-crm/appointments/AppointmentInputs.tsx",
+          "type": "registry:component"
+        },
+        {
+          "path": "src/components/atomic-crm/appointments/AppointmentEditSheet.tsx",
+          "type": "registry:component"
+        },
+        {
+          "path": "src/components/atomic-crm/appointments/AppointmentCreateSheet.tsx",
+          "type": "registry:component"
+        },
+        {
+          "path": "src/components/atomic-crm/appointments/AddAppointment.tsx",
           "type": "registry:component"
         },
         {

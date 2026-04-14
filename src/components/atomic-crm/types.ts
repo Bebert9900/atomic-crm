@@ -200,6 +200,35 @@ export type Activity = RaRecord &
     | ActivityDealNoteCreated
   );
 
+export type AppointmentSource = "phone_call" | "email_campaign" | "manual";
+export type AppointmentStatus = "scheduled" | "completed" | "cancelled";
+
+export type Appointment = {
+  contact_id: Identifier | null;
+  title: string;
+  description: string | null;
+  start_at: string;
+  end_at: string;
+  location: string | null;
+  source: AppointmentSource;
+  status: AppointmentStatus;
+  sales_id: Identifier;
+  created_at: string;
+} & Pick<RaRecord, "id">;
+
+export type ContactRecording = {
+  contact_id: Identifier;
+  storage_path: string;
+  duration_seconds: number;
+  transcription: string | null;
+  transcription_status: "pending" | "processing" | "completed" | "error";
+  summary: string | null;
+  email_advice: string | null;
+  sms_advice: string | null;
+  created_at: string;
+  sales_id: Identifier;
+} & Pick<RaRecord, "id">;
+
 export interface RAFile {
   src: string;
   title: string;

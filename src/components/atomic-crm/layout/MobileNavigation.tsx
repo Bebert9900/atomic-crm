@@ -6,7 +6,14 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { cn } from "@/lib/utils";
-import { Home, ListTodo, Plus, Settings, Users } from "lucide-react";
+import {
+  CalendarDays,
+  Home,
+  ListTodo,
+  Plus,
+  Settings,
+  Users,
+} from "lucide-react";
 import { useTranslate } from "ra-core";
 import { Link, matchPath, useLocation, useMatch } from "react-router";
 import { ContactCreateSheet } from "../contacts/ContactCreateSheet";
@@ -29,6 +36,8 @@ export const MobileNavigation = () => {
     currentPath = "/tasks";
   } else if (matchPath("/deals/*", location.pathname)) {
     currentPath = "/deals";
+  } else if (matchPath("/appointments/*", location.pathname)) {
+    currentPath = "/appointments";
   } else {
     currentPath = false;
   }
@@ -74,6 +83,12 @@ export const MobileNavigation = () => {
             Icon={ListTodo}
             label={translate("resources.tasks.name", { smart_count: 2 })}
             isActive={currentPath === "/tasks"}
+          />
+          <NavigationButton
+            href="/appointments"
+            Icon={CalendarDays}
+            label="Calendrier"
+            isActive={currentPath === "/appointments"}
           />
           <SettingsButton />
         </>

@@ -4,6 +4,9 @@ import { DeleteButton } from "@/components/admin";
 import { ReferenceManyField } from "@/components/admin/reference-many-field";
 import { ShowButton } from "@/components/admin/show-button";
 
+import { AddAppointment } from "../appointments/AddAppointment";
+import { ContactAppointmentsList } from "../appointments/ContactAppointmentsList";
+import { ContactRecordingsList } from "../recordings/ContactRecordingsList";
 import { AddTask } from "../tasks/AddTask";
 import { TasksIterator } from "../tasks/TasksIterator";
 import { TagsListEdit } from "./TagsListEdit";
@@ -66,6 +69,13 @@ export const ContactAside = ({ link = "edit" }: { link?: "edit" | "show" }) => {
         </ReferenceManyField>
         <AddTask />
       </AsideSection>
+
+      <AsideSection title="Rendez-vous">
+        <ContactAppointmentsList contactId={record.id} />
+        <AddAppointment />
+      </AsideSection>
+
+      <ContactRecordingsList contactId={record.id as number} />
 
       {link !== "edit" && (
         <>
