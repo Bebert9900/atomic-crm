@@ -19,6 +19,8 @@ __screenshots__
 .DS_Store
 .env.local
 .env.production
+.env.development
+.env.e2e
 .env.development.local
 .env.test.local
 .env.production.local
@@ -39,7 +41,6 @@ dist/
 # Shadcn Registry
 public/r/
 
-!supabase/functions/.env
 .claude/settings.local.json
 
 # Playwright
