@@ -17,6 +17,7 @@ import { AsideSection } from "../misc/AsideSection";
 import type { Contact } from "../types";
 import { ContactMergeButton } from "./ContactMergeButton";
 import { ExportVCardButton } from "./ExportVCardButton";
+import { SendEmailButton } from "../emails/SendEmailButton";
 
 export const ContactAside = ({ link = "edit" }: { link?: "edit" | "show" }) => {
   const record = useRecordContext<Contact>();
@@ -76,6 +77,10 @@ export const ContactAside = ({ link = "edit" }: { link?: "edit" | "show" }) => {
       </AsideSection>
 
       <ContactRecordingsList contactId={record.id as number} />
+
+      <div className="my-4">
+        <SendEmailButton />
+      </div>
 
       {link !== "edit" && (
         <>
