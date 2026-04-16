@@ -78,6 +78,27 @@ create or replace trigger on_deal_notes_deleted_delete_note_attachments
     after delete on public.deal_notes
     for each row execute function public.cleanup_note_attachments();
 
+-- Auto-update contact status based on activity scoring
+create or replace trigger update_contact_status_on_note
+    after insert or delete on public.contact_notes
+    for each row execute function public.update_contact_status_on_activity();
+
+create or replace trigger update_contact_status_on_deal
+    after insert or update or delete on public.deals
+    for each row execute function public.update_contact_status_on_activity();
+
+create or replace trigger update_contact_status_on_task
+    after insert or update or delete on public.tasks
+    for each row execute function public.update_contact_status_on_activity();
+
+create or replace trigger update_contact_status_on_appointment
+    after insert or update or delete on public.appointments
+    for each row execute function public.update_contact_status_on_activity();
+
+create or replace trigger update_contact_status_on_recording
+    after insert on public.contact_recordings
+    for each row execute function public.update_contact_status_on_activity();
+
 -- Auth triggers: sync auth.users to public.sales
 create or replace trigger on_auth_user_created
     after insert on auth.users
