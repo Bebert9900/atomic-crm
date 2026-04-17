@@ -1,42 +1,40 @@
-name: 📧 Email IMAP Sync
+name: Email IMAP Sync
+
 on:
-    schedule:
-        # Every 5 minutes
-        - cron: "*/5 * * * *"
-    workflow_dispatch:
+  schedule:
+    - cron: "*/5 * * * *"
+  workflow_dispatch:
 
 concurrency:
-    group: email-sync
-    cancel-in-progress: false
+  group: email-sync
+  cancel-in-progress: false
 
 jobs:
-    sync:
-        name: Sync IMAP mailboxes
-        runs-on: ubuntu-latest
-        timeout-minutes: 10
+  sync:
+    name: Sync IMAP mailboxes
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+      SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+      IS_CONFIGURED: ${{ secrets.SUPABASE_URL != '' && secrets.SUPABASE_SERVICE_ROLE_KEY != '' }}
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
 
-        env:
-            SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
-            SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
-            IS_CONFIGURED: ${{ secrets.SUPABASE_URL && secrets.SUPABASE_SERVICE_ROLE_KEY }}
+      - name: Setup node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
 
-        steps:
-            - name: 📥 Checkout repo
-              uses: actions/checkout@v4
+      - name: Install deps
+        run: npm ci
 
-            - name: ⚙️ Setup node
-              uses: actions/setup-node@v4
-              with:
-                  node-version: 22
-                  cache: npm
+      - name: Run sync
+        if: env.IS_CONFIGURED == 'true'
+        run: npm run sync:emails
 
-            - name: 📥 Install deps
-              run: npm ci
-
-            - if: ${{ env.IS_CONFIGURED }}
-              name: 🔄 Run sync
-              run: npm run sync:emails
-
-            - if: ${{ !env.IS_CONFIGURED }}
-              name: Email sync skipped
-              run: echo ':warning: Missing SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY secret' >> $GITHUB_STEP_SUMMARY
+      - name: Email sync skipped
+        if: env.IS_CONFIGURED != 'true'
+        run: echo '::warning::Missing SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY secret'
