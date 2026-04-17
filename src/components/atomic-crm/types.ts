@@ -216,6 +216,50 @@ export type Appointment = {
   created_at: string;
 } & Pick<RaRecord, "id">;
 
+export type EmailAccount = {
+  email: string;
+  imap_host: string;
+  imap_port: number;
+  smtp_host?: string | null;
+  smtp_port: number;
+  sales_id?: Identifier | null;
+  is_active: boolean;
+  skip_tls_verify: boolean;
+  created_at: string;
+} & Pick<RaRecord, "id">;
+
+export type EmailMessage = {
+  message_id: string;
+  email_account_id: Identifier;
+  folder: string;
+  from_email: string;
+  from_name: string | null;
+  to_emails: { email: string; name: string | null }[] | null;
+  cc_emails: { email: string; name: string | null }[] | null;
+  subject: string | null;
+  text_body: string | null;
+  html_body: string | null;
+  date: string;
+  is_read: boolean;
+  contact_id: Identifier | null;
+  sales_id: Identifier | null;
+  uid: number | null;
+  created_at: string;
+} & Pick<RaRecord, "id">;
+
+export type UnreadEmail = {
+  from_email: string;
+  from_name: string | null;
+  subject: string | null;
+  date: string;
+  contact_id: Identifier | null;
+  sales_id: Identifier | null;
+  email_account_id: Identifier;
+  account_email: string;
+  contact_first_name: string | null;
+  contact_last_name: string | null;
+} & Pick<RaRecord, "id">;
+
 export type ContactRecording = {
   contact_id: Identifier;
   storage_path: string;

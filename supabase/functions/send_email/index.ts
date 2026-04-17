@@ -262,21 +262,85 @@ async function generateEmail(
   }
 }
 
-async function sendViaSMTP(to: string, subject: string, body: string) {
+interface SmtpConfig {
+  host: string;
+  port: number;
+  username: string;
+  password: string;
+  displayName?: string | null;
+  fromEmail: string;
+  skipTlsVerify?: boolean;
+}
+
+async function resolveSmtpConfig(salesId: number | null): Promise<SmtpConfig> {
+  // Prefer the sales user's own email_account (per-user inbox).
+  if (salesId) {
+    const { data: account } = await supabaseAdmin
+      .from("email_accounts")
+      .select(
+        "email, smtp_host, smtp_port, imap_host, encrypted_password, skip_tls_verify",
+      )
+      .eq("sales_id", salesId)
+      .eq("is_active", true)
+      .maybeSingle();
+
+    if (account?.encrypted_password) {
+      const { data: plain, error } = await supabaseAdmin.rpc(
+        "decrypt_email_password",
+        { encrypted_password: account.encrypted_password },
+      );
+      if (error) throw new Error(`Decrypt failed: ${error.message}`);
+      return {
+        host: account.smtp_host || account.imap_host,
+        port: account.smtp_port || 465,
+        username: account.email,
+        password: plain as string,
+        fromEmail: account.email,
+        skipTlsVerify: account.skip_tls_verify,
+      };
+    }
+  }
+
+  // Fallback: global SMTP env vars (legacy).
+  if (!SMTP_HOST || !SMTP_USER || !SMTP_PASS) {
+    throw new Error(
+      "No SMTP configuration: no email_account for this sales user and SMTP_* env vars are missing",
+    );
+  }
+  return {
+    host: SMTP_HOST,
+    port: SMTP_PORT,
+    username: SMTP_USER,
+    password: SMTP_PASS,
+    fromEmail: SMTP_USER,
+  };
+}
+
+async function sendViaSMTP(
+  config: SmtpConfig,
+  to: string,
+  subject: string,
+  body: string,
+) {
+  const secure = config.port === 465;
   const client = new SMTPClient({
     connection: {
-      hostname: SMTP_HOST!,
-      port: SMTP_PORT,
-      tls: false,
+      hostname: config.host,
+      port: config.port,
+      tls: secure,
       auth: {
-        username: SMTP_USER!,
-        password: SMTP_PASS!,
+        username: config.username,
+        password: config.password,
       },
     },
   });
 
+  const fromHeader = config.displayName
+    ? `${config.displayName} <${config.fromEmail}>`
+    : config.fromEmail;
+
   await client.send({
-    from: `Faycal - Fabrik <${SMTP_USER}>`,
+    from: fromHeader,
     to,
     subject,
     content: body,
@@ -336,10 +400,7 @@ async function handler(req: Request): Promise<Response> {
 
     const toEmail = contact.email_jsonb[0].email;
 
-    // Send the email
-    await sendViaSMTP(toEmail, subject!, body!);
-
-    // Save as a note on the contact
+    // Resolve the sales user BEFORE sending so we pick the right SMTP account.
     const authHeader = req.headers.get("Authorization");
     const localClient = (
       await import("jsr:@supabase/supabase-js@2")
@@ -349,15 +410,25 @@ async function handler(req: Request): Promise<Response> {
       { global: { headers: { Authorization: authHeader! } } },
     );
     const { data: userData } = await localClient.auth.getUser();
-    let salesId = null;
+    let salesId: number | null = null;
+    let salesName: string | null = null;
     if (userData?.user) {
       const { data: sale } = await supabaseAdmin
         .from("sales")
-        .select("id")
+        .select("id, first_name, last_name")
         .eq("user_id", userData.user.id)
         .single();
-      salesId = sale?.id;
+      salesId = sale?.id ?? null;
+      salesName =
+        sale?.first_name || sale?.last_name
+          ? `${sale.first_name ?? ""} ${sale.last_name ?? ""}`.trim()
+          : null;
     }
+
+    // Send the email using the sales user's own SMTP account (or global fallback).
+    const smtpConfig = await resolveSmtpConfig(salesId);
+    smtpConfig.displayName = salesName;
+    await sendViaSMTP(smtpConfig, toEmail, subject!, body!);
 
     await supabaseAdmin.from("contact_notes").insert({
       contact_id,

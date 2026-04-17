@@ -1,0 +1,125 @@
+---
+title: Email sync
+description: Per-contact email history via IMAP
+---
+
+Atomic CRM synchronises each commercial's mailbox over IMAP and attaches the
+matching messages to the corresponding contacts. The goal is to let every sales
+rep see the full email history with a prospect directly on the contact page.
+
+## Moving parts
+
+- **Tables** (migrations `20260416160000_email_sync.sql` and
+  `20260416170000_email_sync_vault.sql`):
+  - `email_accounts` — IMAP/SMTP credentials per commercial (password encrypted
+    via `pgcrypto` with a key stored in Supabase Vault under the name
+    `email_encryption_key`).
+  - `email_messages` — stored emails with `contact_id` foreign key.
+  - `email_sync_state` — last UID seen per `(account, folder)`.
+- **View `unread_emails_summary`** — feeds the dashboard "Emails non lus" widget.
+- **Worker `scripts/email-sync.mjs`** — Node script, connects to each active
+  account, pulls `INBOX` + `Sent`, matches senders/recipients against
+  `contacts.email_jsonb`, and upserts the matched messages.
+- **UI**
+  - `UnreadEmailsList` on the dashboard (under Upcoming Tasks).
+  - `ContactEmails` tab on the contact page (mobile) and below the notes on desktop.
+  - `EmailAccountsPage` settings page under the user menu (admins only).
+- **`send_email` edge function** now picks the SMTP config from the caller's
+  `email_accounts` row (falls back to the legacy `SMTP_*` env vars).
+
+## Setting the encryption key
+
+Before any account can be saved, the encryption key must be stored in
+Supabase Vault:
+
+```sql
+select vault.create_secret(
+  'generate-a-long-random-string',
+  'email_encryption_key',
+  'AES-256 key for encrypting IMAP passwords in email_accounts'
+);
+```
+
+Run this once per environment (local + remote). Generate the key with
+`openssl rand -hex 32`. Vault uses PostgreSQL's `pgsodium` to keep the secret
+encrypted at rest.
+
+## Installing the cron
+
+The script is designed to run as a recurring job. Two options:
+
+### systemd timer (recommended)
+
+On the server that runs the sync, create `/etc/systemd/system/atomic-crm-email-sync.service`:
+
+```ini
+[Unit]
+Description=Atomic CRM email sync
+After=network-online.target
+
+[Service]
+Type=oneshot
+User=atomic-crm
+WorkingDirectory=/opt/atomic-crm
+EnvironmentFile=/opt/atomic-crm/scripts/email-sync.env
+ExecStart=/usr/bin/npm run --silent sync:emails
+```
+
+And `/etc/systemd/system/atomic-crm-email-sync.timer`:
+
+```ini
+[Unit]
+Description=Run Atomic CRM email sync every 5 minutes
+
+[Timer]
+OnBootSec=2min
+OnUnitActiveSec=5min
+Unit=atomic-crm-email-sync.service
+
+[Install]
+WantedBy=timers.target
+```
+
+Then:
+
+```bash
+sudo systemctl daemon-reload
+sudo systemctl enable --now atomic-crm-email-sync.timer
+sudo systemctl list-timers | grep email-sync
+```
+
+Check logs with `journalctl -u atomic-crm-email-sync.service -f`.
+
+### Plain cron (alternative)
+
+```cron
+*/5 * * * * cd /opt/atomic-crm && /usr/bin/env $(cat scripts/email-sync.env | xargs) npm run --silent sync:emails >> /var/log/atomic-crm-email-sync.log 2>&1
+```
+
+### Required environment
+
+See `scripts/email-sync.env.example`:
+
+- `SUPABASE_URL` — the project URL (`https://<ref>.supabase.co`).
+- `SUPABASE_SERVICE_ROLE_KEY` — needed because the script calls
+  `decrypt_email_password` (service-role only) and writes via PostgREST with RLS
+  bypassed.
+
+Never commit this file and keep it `chmod 600`.
+
+## What the worker does
+
+For each active `email_accounts` row:
+
+1. Decrypts the password via `decrypt_email_password`.
+2. Connects to IMAP (TLS if port 993).
+3. For each folder in `INBOX` + the server's Sent folder (multiple aliases tried):
+   - Reads messages with UID > last synced UID.
+   - Matches any `from`/`to`/`cc` email address against `contacts.email_jsonb`.
+   - Upserts matched messages into `email_messages` (conflict on
+     `(email_account_id, folder, message_id)`), linking `contact_id`.
+   - Skips messages that don't involve any known contact.
+4. Updates `email_sync_state.last_uid`.
+
+Unmatched emails are intentionally ignored so the table stays scoped to
+prospect conversations.

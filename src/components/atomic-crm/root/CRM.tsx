@@ -34,6 +34,7 @@ import sales from "../sales";
 import { SettingsPageMobile } from "../settings/SettingsPageMobile";
 import { ProfilePage } from "../settings/ProfilePage";
 import { SettingsPage } from "../settings/SettingsPage";
+import { EmailAccountsPage } from "../settings/EmailAccountsPage";
 import {
   CONFIGURATION_STORE_KEY,
   type ConfigurationContextValue,
@@ -262,6 +263,7 @@ const DesktopAdmin = (
       <CustomRoutes>
         <Route path={ProfilePage.path} element={<ProfilePage />} />
         <Route path={SettingsPage.path} element={<SettingsPage />} />
+        <Route path={EmailAccountsPage.path} element={<EmailAccountsPage />} />
         <Route path={ImportPage.path} element={<ImportPage />} />
       </CustomRoutes>
       <Resource name="deals" {...deals} />
@@ -274,6 +276,9 @@ const DesktopAdmin = (
       <Resource name="appointments" {...appointments} />
       <Resource name="sales" {...sales} />
       <Resource name="tags" />
+      <Resource name="email_accounts" />
+      <Resource name="email_messages" />
+      <Resource name="unread_emails_summary" />
     </Admin>
   );
 };

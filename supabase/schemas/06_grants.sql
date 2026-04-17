@@ -176,6 +176,30 @@ grant all on sequence public.tasks_id_seq to anon;
 grant all on sequence public.tasks_id_seq to authenticated;
 grant all on sequence public.tasks_id_seq to service_role;
 
+grant all on table public.email_accounts to anon;
+grant all on table public.email_accounts to authenticated;
+grant all on table public.email_accounts to service_role;
+
+grant all on table public.email_messages to anon;
+grant all on table public.email_messages to authenticated;
+grant all on table public.email_messages to service_role;
+
+grant all on table public.email_sync_state to anon;
+grant all on table public.email_sync_state to authenticated;
+grant all on table public.email_sync_state to service_role;
+
+grant all on sequence public.email_accounts_id_seq to anon;
+grant all on sequence public.email_accounts_id_seq to authenticated;
+grant all on sequence public.email_accounts_id_seq to service_role;
+
+grant all on sequence public.email_messages_id_seq to anon;
+grant all on sequence public.email_messages_id_seq to authenticated;
+grant all on sequence public.email_messages_id_seq to service_role;
+
+grant all on sequence public.email_sync_state_id_seq to anon;
+grant all on sequence public.email_sync_state_id_seq to authenticated;
+grant all on sequence public.email_sync_state_id_seq to service_role;
+
 -- Default privileges
 alter default privileges for role postgres in schema public grant all on sequences to postgres;
 alter default privileges for role postgres in schema public grant all on sequences to anon;

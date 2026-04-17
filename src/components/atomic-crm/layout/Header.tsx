@@ -1,4 +1,4 @@
-import { Import, Settings, User, Users } from "lucide-react";
+import { Import, Mail, Settings, User, Users } from "lucide-react";
 import { CanAccess, useTranslate, useUserMenu } from "ra-core";
 import { Link, matchPath, useLocation } from "react-router";
 import { RefreshButton } from "@/components/admin/refresh-button";
@@ -8,6 +8,7 @@ import { DropdownMenuItem } from "@/components/ui/dropdown-menu";
 
 import { useConfigurationContext } from "../root/ConfigurationContext";
 import { ImportPage } from "../misc/ImportPage";
+import { EmailAccountsPage } from "../settings/EmailAccountsPage";
 
 const Header = () => {
   const { darkModeLogo, lightModeLogo, title } = useConfigurationContext();
@@ -97,6 +98,9 @@ const Header = () => {
                   <CanAccess resource="configuration" action="edit">
                     <SettingsMenu />
                   </CanAccess>
+                  <CanAccess resource="email_accounts" action="list">
+                    <EmailAccountsMenu />
+                  </CanAccess>
                   <ImportFromJsonMenuItem />
                 </UserMenu>
               </div>
@@ -172,6 +176,21 @@ const SettingsMenu = () => {
       <Link to="/settings" className="flex items-center gap-2">
         <Settings />
         {translate("crm.settings.title")}
+      </Link>
+    </DropdownMenuItem>
+  );
+};
+
+const EmailAccountsMenu = () => {
+  const userMenuContext = useUserMenu();
+  if (!userMenuContext) {
+    throw new Error("<EmailAccountsMenu> must be used inside <UserMenu>");
+  }
+  return (
+    <DropdownMenuItem asChild onClick={userMenuContext.onClose}>
+      <Link to={EmailAccountsPage.path} className="flex items-center gap-2">
+        <Mail />
+        Comptes email
       </Link>
     </DropdownMenuItem>
   );

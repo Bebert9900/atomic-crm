@@ -81,3 +81,23 @@ create policy "Enable update for admins" on public.configuration for update to a
 
 -- Favicons excluded domains
 create policy "Enable access for authenticated users only" on public.favicons_excluded_domains to authenticated using (true) with check (true);
+
+-- Email Accounts (admin-only for writes, read for authenticated)
+alter table public.email_accounts enable row level security;
+create policy "Enable read for authenticated" on public.email_accounts for select to authenticated using (true);
+create policy "Enable insert for admins" on public.email_accounts for insert to authenticated with check (public.is_admin());
+create policy "Enable update for admins" on public.email_accounts for update to authenticated using (public.is_admin()) with check (public.is_admin());
+create policy "Enable delete for admins" on public.email_accounts for delete to authenticated using (public.is_admin());
+
+-- Email Messages
+alter table public.email_messages enable row level security;
+create policy "Enable read access for authenticated users" on public.email_messages for select to authenticated using (true);
+create policy "Enable insert for authenticated users only" on public.email_messages for insert to authenticated with check (true);
+create policy "Email Messages Update Policy" on public.email_messages for update to authenticated using (true);
+create policy "Email Messages Delete Policy" on public.email_messages for delete to authenticated using (true);
+
+-- Email Sync State (admin-only)
+alter table public.email_sync_state enable row level security;
+create policy "Enable read for authenticated" on public.email_sync_state for select to authenticated using (true);
+create policy "Enable insert for service role" on public.email_sync_state for insert to service_role with check (true);
+create policy "Enable update for service role" on public.email_sync_state for update to service_role using (true);

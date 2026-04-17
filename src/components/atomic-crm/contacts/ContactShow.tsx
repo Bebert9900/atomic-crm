@@ -27,6 +27,7 @@ import { ContactEditSheet } from "./ContactEditSheet";
 import { ContactStatusSelector } from "./ContactInputs";
 import { ContactPersonalInfo } from "./ContactPersonalInfo";
 import { ContactBackgroundInfo } from "./ContactBackgroundInfo";
+import { ContactEmails } from "./ContactEmails";
 import { ContactTasksList } from "./ContactTasksList";
 import type { Contact } from "../types";
 import { Avatar } from "./Avatar";
@@ -134,10 +135,11 @@ const ContactShowContentMobile = () => {
         </div>
 
         <Tabs defaultValue="notes" className="w-full">
-          <TabsList className="grid w-full grid-cols-3 h-10">
+          <TabsList className="grid w-full grid-cols-4 h-10">
             <TabsTrigger value="notes">
               {translate("resources.notes.name", { smart_count: 2 })}
             </TabsTrigger>
+            <TabsTrigger value="emails">Emails</TabsTrigger>
             <TabsTrigger value="tasks">
               {translate("crm.common.task_count", {
                 smart_count: taskCount ?? 0,
@@ -179,6 +181,10 @@ const ContactShowContentMobile = () => {
             >
               <NotesIteratorMobile contactId={record.id} showStatus />
             </InfiniteListBase>
+          </TabsContent>
+
+          <TabsContent value="emails" className="mt-4">
+            <ContactEmails />
           </TabsContent>
 
           <TabsContent value="tasks" className="mt-4">
@@ -293,6 +299,11 @@ const ContactShowContent = () => {
             >
               <NotesIterator reference="contacts" showStatus />
             </InfiniteListBase>
+            <Separator className="my-6" />
+            <h3 className="text-lg font-semibold mb-3">
+              Historique des emails
+            </h3>
+            <ContactEmails />
           </CardContent>
         </Card>
       </div>
