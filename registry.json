@@ -158,6 +158,10 @@
           "type": "registry:component"
         },
         {
+          "path": "src/components/atomic-crm/settings/EmailAccountsPage.tsx",
+          "type": "registry:component"
+        },
+        {
           "path": "src/components/atomic-crm/sales/useGetSalesName.ts",
           "type": "registry:component"
         },
@@ -626,6 +630,10 @@
           "type": "registry:component"
         },
         {
+          "path": "src/components/atomic-crm/dashboard/UnreadEmailsList.tsx",
+          "type": "registry:component"
+        },
+        {
           "path": "src/components/atomic-crm/dashboard/TasksList.tsx",
           "type": "registry:component"
         },
@@ -723,6 +731,10 @@
         },
         {
           "path": "src/components/atomic-crm/contacts/ContactEmpty.tsx",
+          "type": "registry:component"
+        },
+        {
+          "path": "src/components/atomic-crm/contacts/ContactEmails.tsx",
           "type": "registry:component"
         },
         {
