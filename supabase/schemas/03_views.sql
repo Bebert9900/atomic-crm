@@ -121,10 +121,12 @@ select
     (jsonb_path_query_array(co.email_jsonb, '$[*]."email"'))::text as email_fts,
     (jsonb_path_query_array(co.phone_jsonb, '$[*]."number"'))::text as phone_fts,
     c.name as company_name,
-    count(distinct t.id) filter (where t.done_date is null) as nb_tasks
+    count(distinct t.id) filter (where t.done_date is null) as nb_tasks,
+    count(distinct em.id) filter (where em.is_read = false and em.folder = 'INBOX') as nb_unread_emails
 from public.contacts co
     left join public.tasks t on co.id = t.contact_id
     left join public.companies c on co.company_id = c.id
+    left join public.email_messages em on co.id = em.contact_id
 group by co.id, c.name;
 
 create or replace view public.init_state with (security_invoker = off) as

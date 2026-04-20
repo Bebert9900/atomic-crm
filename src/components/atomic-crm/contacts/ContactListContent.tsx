@@ -15,7 +15,7 @@ import { TextField } from "@/components/admin/text-field";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
-import { RotateCcw } from "lucide-react";
+import { Mail, RotateCcw } from "lucide-react";
 
 import { Status } from "../misc/Status";
 import { formatRelativeDate } from "../misc/RelativeDate";
@@ -132,28 +132,39 @@ const ContactItemContent = ({
           <div className="font-medium">
             {`${contact.first_name} ${contact.last_name ?? ""}`}
           </div>
-          {contact.title || contact.company_id != null || contact.nb_tasks ? (
-            <div className="text-sm text-muted-foreground">
-              {contact.title && contact.company_id != null
-                ? `${translate("resources.contacts.position_at", {
-                    title: contact.title,
-                  })} `
-                : contact.title}
-              {contact.company_id != null && (
-                <ReferenceField
-                  source="company_id"
-                  reference="companies"
-                  link={false}
-                >
-                  <TextField source="name" />
-                </ReferenceField>
-              )}
-              {contact.nb_tasks
-                ? ` - ${translate("crm.common.task_count", {
-                    smart_count: contact.nb_tasks,
-                  })}`
-                : ""}
-              &nbsp;&nbsp;
+          {contact.title ||
+          contact.company_id != null ||
+          contact.nb_tasks ||
+          contact.nb_unread_emails ? (
+            <div className="text-sm text-muted-foreground flex flex-wrap items-center gap-x-1">
+              <span>
+                {contact.title && contact.company_id != null
+                  ? `${translate("resources.contacts.position_at", {
+                      title: contact.title,
+                    })} `
+                  : contact.title}
+                {contact.company_id != null && (
+                  <ReferenceField
+                    source="company_id"
+                    reference="companies"
+                    link={false}
+                  >
+                    <TextField source="name" />
+                  </ReferenceField>
+                )}
+                {contact.nb_tasks
+                  ? ` - ${translate("crm.common.task_count", {
+                      smart_count: contact.nb_tasks,
+                    })}`
+                  : ""}
+              </span>
+              {contact.nb_unread_emails ? (
+                <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-primary/10 text-primary text-xs font-medium">
+                  <Mail className="w-3 h-3" />
+                  {contact.nb_unread_emails}
+                </span>
+              ) : null}
+              &nbsp;
               <TagsList />
             </div>
           ) : null}
@@ -291,6 +302,15 @@ const ContactItemContentMobile = ({ contact }: { contact: Contact }) => {
                   {translate("crm.common.task_count", {
                     smart_count: contact.nb_tasks,
                   })}
+                </span>
+              ) : null}
+              {contact.nb_unread_emails ? (
+                <span className="inline-flex w-fit items-center gap-1 px-1.5 py-0.5 rounded bg-primary/10 text-primary text-xs font-medium">
+                  <Mail className="w-3 h-3" />
+                  {contact.nb_unread_emails}{" "}
+                  {contact.nb_unread_emails > 1
+                    ? "emails non lus"
+                    : "email non lu"}
                 </span>
               ) : null}
             </div>

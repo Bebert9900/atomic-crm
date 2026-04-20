@@ -25,8 +25,10 @@ import { Markdown } from "../misc/Markdown";
 import { RelativeDate } from "../misc/RelativeDate";
 import { Status } from "../misc/Status";
 import type { ContactNote, DealNote } from "../types";
+import { EmailNoteCard, InboundEmailCard } from "./EmailNoteCard";
 import { NoteAttachments } from "./NoteAttachments";
 import { NoteInputs } from "./NoteInputs";
+import { parseEmailNote, parseInboundEmailNote } from "./parseEmailNote";
 import { useGetSalesName } from "../sales/useGetSalesName";
 
 export const Note = ({
@@ -187,17 +189,33 @@ export const Note = ({
         </Form>
       ) : (
         <div className="pt-2 text-sm max-w-150">
-          {note.text && (
-            <div
-              ref={contentRef}
-              className={cn(
-                "overflow-hidden transition-[max-height] duration-300 ease-in-out",
-                isExpanded ? "max-h-[5000px]" : "max-h-46",
-              )}
-            >
-              <Markdown>{note.text}</Markdown>
-            </div>
-          )}
+          {note.text &&
+            (() => {
+              const emailNote = parseEmailNote(note.text);
+              const inboundEmail = !emailNote
+                ? parseInboundEmailNote(note.text)
+                : null;
+              return (
+                <div
+                  ref={contentRef}
+                  className={cn(
+                    "overflow-hidden transition-[max-height] duration-300 ease-in-out",
+                    isExpanded ? "max-h-[5000px]" : "max-h-46",
+                  )}
+                >
+                  {emailNote ? (
+                    <EmailNoteCard email={emailNote} />
+                  ) : inboundEmail ? (
+                    <InboundEmailCard
+                      subject={inboundEmail.subject}
+                      body={inboundEmail.body}
+                    />
+                  ) : (
+                    <Markdown>{note.text}</Markdown>
+                  )}
+                </div>
+              );
+            })()}
           {isTruncated && (
             <button
               onClick={(e) => {
