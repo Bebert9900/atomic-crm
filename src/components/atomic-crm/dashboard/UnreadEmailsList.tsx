@@ -1,5 +1,5 @@
 import { Mail } from "lucide-react";
-import { useGetIdentity, useGetList, useTranslate, useUpdate } from "ra-core";
+import { useGetList, useTranslate, useUpdate } from "ra-core";
 import { useNavigate } from "react-router";
 import { Card } from "@/components/ui/card";
 
@@ -20,20 +20,14 @@ function formatRelativeDate(iso: string) {
 }
 
 export const UnreadEmailsList = () => {
-  const { identity } = useGetIdentity();
   const translate = useTranslate();
   const navigate = useNavigate();
   const [update] = useUpdate();
 
-  const { data, isPending } = useGetList<UnreadEmail>(
-    "unread_emails_summary",
-    {
-      pagination: { page: 1, perPage: 10 },
-      sort: { field: "date", order: "DESC" },
-      filter: identity?.id ? { sales_id: identity.id } : {},
-    },
-    { enabled: Number.isInteger(identity?.id) },
-  );
+  const { data, isPending } = useGetList<UnreadEmail>("unread_emails_summary", {
+    pagination: { page: 1, perPage: 10 },
+    sort: { field: "date", order: "DESC" },
+  });
 
   const handleClick = (email: UnreadEmail) => {
     update("email_messages", {
@@ -91,6 +85,11 @@ export const UnreadEmailsList = () => {
                     <p className="text-sm text-muted-foreground truncate">
                       {email.subject || "(sans objet)"}
                     </p>
+                    {email.account_email ? (
+                      <p className="text-xs text-muted-foreground/70 truncate">
+                        → {email.account_email}
+                      </p>
+                    ) : null}
                   </button>
                 </li>
               );
