@@ -1,18 +1,12 @@
-import { Handshake } from "lucide-react";
 import { Link } from "react-router";
-import {
-  useCreatePath,
-  useListContext,
-  useRecordContext,
-  useTranslate,
-} from "ra-core";
-import { ReferenceManyField } from "@/components/admin/reference-many-field";
+import { useCreatePath, useRecordContext, useTranslate } from "ra-core";
 import { Card } from "@/components/ui/card";
 
-import { Avatar as ContactAvatar } from "../contacts/Avatar";
 import { useConfigurationContext } from "../root/ConfigurationContext";
 import type { Company } from "../types";
 import { CompanyAvatar } from "./CompanyAvatar";
+import { getTranslatedCompanySizeLabel } from "./getTranslatedCompanySizeLabel";
+import { sizes } from "./sizes";
 
 export const CompanyCard = (props: { record?: Company }) => {
   const createPath = useCreatePath();
@@ -22,7 +16,16 @@ export const CompanyCard = (props: { record?: Company }) => {
   if (!record) return null;
 
   const sector = companySectors.find((s) => s.value === record.sector);
-  const sectorLabel = sector?.label;
+  const sectorLabel = sector?.label ?? "";
+  const sizeObj = sizes.find((s) => s.id === record.size);
+  const sizeLabel = sizeObj
+    ? getTranslatedCompanySizeLabel(sizeObj, translate)
+    : "";
+
+  const meta = [sectorLabel, sizeLabel].filter(Boolean).join(" · ");
+
+  // Pipeline = approximation based on nb_deals (we don't have deal amounts here)
+  // We'll show nb_deals and nb_contacts
 
   return (
     <Link
@@ -33,66 +36,42 @@ export const CompanyCard = (props: { record?: Company }) => {
       })}
       className="no-underline"
     >
-      <Card className="h-[200px] flex flex-col justify-between p-4 hover:bg-muted">
-        <div className="flex flex-col items-center gap-1">
+      <Card className="flex flex-col justify-between p-5 h-full hover:bg-muted/50 transition-colors">
+        {/* Top: avatar + name + meta */}
+        <div className="flex items-start gap-3 mb-4">
           <CompanyAvatar />
-          <div className="text-center mt-1">
-            <h6 className="text-sm font-medium">{record.name}</h6>
-            <p className="text-xs text-muted-foreground">{sectorLabel}</p>
+          <div className="min-w-0 flex-1">
+            <h3 className="text-sm font-semibold truncate uppercase">
+              {record.name}
+            </h3>
+            {meta && (
+              <p className="text-xs text-muted-foreground truncate">{meta}</p>
+            )}
           </div>
         </div>
-        <div className="flex flex-row w-full justify-between gap-2">
-          <div className="flex items-center">
-            {record.nb_contacts ? (
-              <ReferenceManyField reference="contacts" target="company_id">
-                <AvatarGroupIterator />
-              </ReferenceManyField>
-            ) : null}
-          </div>
-          {record.nb_deals ? (
-            <div className="flex items-center ml-2 gap-0.5">
-              <Handshake className="w-4 h-4 text-muted-foreground" />
-              <span className="text-sm font-medium">{record.nb_deals}</span>
-              <span className="text-xs text-muted-foreground">
-                {translate("resources.deals.name", {
-                  smart_count: record.nb_deals ?? 0,
-                  _: "Deal |||| Deals",
-                })}
-              </span>
+
+        {/* Bottom: stats */}
+        <div className="flex items-end gap-6">
+          {record.nb_deals != null && (
+            <div>
+              <p className="text-[10px] text-muted-foreground font-medium">
+                {translate("resources.deals.name", { smart_count: 2 })}
+              </p>
+              <p className="text-lg font-bold tabular-nums">{record.nb_deals}</p>
             </div>
-          ) : null}
+          )}
+          {record.nb_contacts != null && record.nb_contacts > 0 && (
+            <div>
+              <p className="text-[10px] text-muted-foreground font-medium">
+                {translate("resources.contacts.name", { smart_count: 2 })}
+              </p>
+              <p className="text-lg font-bold tabular-nums">
+                {record.nb_contacts}
+              </p>
+            </div>
+          )}
         </div>
       </Card>
     </Link>
-  );
-};
-
-const AvatarGroupIterator = () => {
-  const { data, total, error, isPending } = useListContext();
-  if (isPending || error) return null;
-
-  const MAX_AVATARS = 3;
-  return (
-    <div className="*:data-[slot=avatar]:ring-background flex -space-x-0.5 *:data-[slot=avatar]:ring-2 *:data-[slot=avatar]:grayscale-50">
-      {data.slice(0, MAX_AVATARS).map((record: any) => (
-        <ContactAvatar
-          key={record.id}
-          record={record}
-          width={25}
-          height={25}
-          title={`${record.first_name} ${record.last_name}`}
-        />
-      ))}
-      {total > MAX_AVATARS && (
-        <span
-          className="relative flex size-8 shrink-0 overflow-hidden rounded-full w-[25px] h-[25px]"
-          data-slot="avatar"
-        >
-          <span className="bg-muted flex size-full items-center justify-center rounded-full text-[10px]">
-            +{total - MAX_AVATARS}
-          </span>
-        </span>
-      )}
-    </div>
   );
 };

@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { useGetList, useLocaleState } from "ra-core";
+import { useGetList, useLocaleState, useTranslate } from "ra-core";
 import { ScheduleXCalendar, useNextCalendarApp } from "@schedule-x/react";
 import {
   createViewDay,
@@ -14,6 +14,7 @@ import { useTheme } from "@/components/admin/use-theme";
 import { Card } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 import type { Appointment } from "../types";
+import { PageHeader } from "../layout/PageHeader";
 import { AppointmentCreateSheet } from "./AppointmentCreateSheet";
 import { AppointmentEditSheet } from "./AppointmentEditSheet";
 
@@ -64,6 +65,7 @@ const getDefaultDateRange = (
 };
 
 export const AppointmentList = () => {
+  const translate = useTranslate();
   const [createOpen, setCreateOpen] = useState(false);
   const [editId, setEditId] = useState<string | number | null>(null);
   const [defaultStart, setDefaultStart] = useState<string | undefined>();
@@ -195,7 +197,11 @@ export const AppointmentList = () => {
   }, [events, calendar]);
 
   return (
-    <div className="mt-2 mb-2 flex flex-col gap-4">
+    <div className="flex flex-col gap-4">
+      <PageHeader
+        title={translate("crm.sidebar.calendar", { _: "Calendrier" })}
+        subtitle={translate("crm.calendar.view_label", { _: "Vue du mois" })}
+      />
       <Card className="p-4">
         <div
           className={cn(

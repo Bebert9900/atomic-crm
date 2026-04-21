@@ -1,32 +1,22 @@
-import { Clock } from "lucide-react";
+import { Zap } from "lucide-react";
 import { useTranslate } from "ra-core";
 import { Card } from "@/components/ui/card";
-import { useIsMobile } from "@/hooks/use-mobile";
 
 import { ActivityLog } from "../activity/ActivityLog";
 
 export function DashboardActivityLog() {
-  const isMobile = useIsMobile();
   const translate = useTranslate();
   return (
-    <div className="flex flex-col">
-      <div className="flex items-center mb-4 md:mb-2">
-        <div className="mr-3 flex">
-          <Clock className="text-muted-foreground w-6 h-6" />
-        </div>
-        <h2 className="text-xl font-semibold text-muted-foreground">
+    <Card className="p-5">
+      <div className="flex items-center gap-2 mb-4">
+        <Zap className="h-4 w-4 text-muted-foreground" />
+        <h2 className="text-base font-semibold">
           {translate("crm.dashboard.latest_activity", {
-            _: "Latest Activity",
+            _: "Activité",
           })}
         </h2>
       </div>
-      {isMobile ? (
-        <ActivityLog pageSize={10} />
-      ) : (
-        <Card className="mb-2 p-6">
-          <ActivityLog pageSize={10} />
-        </Card>
-      )}
-    </div>
+      <ActivityLog pageSize={8} />
+    </Card>
   );
 }

@@ -5,6 +5,7 @@ import {
   RecordRepresentation,
   useListContext,
   useLocaleState,
+  useRecordContext,
   useTimeout,
   useTranslate,
 } from "ra-core";
@@ -19,7 +20,6 @@ import { Mail, RotateCcw } from "lucide-react";
 
 import { Status } from "../misc/Status";
 import { formatRelativeDate } from "../misc/RelativeDate";
-import { RecordButton } from "../recordings/RecordButton";
 import type { Contact } from "../types";
 import { Avatar } from "./Avatar";
 import { TagsList } from "./TagsList";
@@ -36,51 +36,60 @@ export const ContactListContent = () => {
   } = useListContext<Contact>();
   const lastSelected = useRef<Identifier | null>(null);
 
-  // Handle shift+click to select a range of rows
   const handleToggleItem = useCallback(
     (id: Identifier, event: MouseEvent) => {
       if (!contacts) return;
-
-      const ids = contacts.map((contact) => contact.id);
-      const lastSelectedIndex = lastSelected.current
+      const ids = contacts.map((c) => c.id);
+      const lastIdx = lastSelected.current
         ? ids.indexOf(lastSelected.current)
         : -1;
-
-      if (event.shiftKey && lastSelectedIndex !== -1) {
-        const index = ids.indexOf(id);
-        const idsBetweenSelections = ids.slice(
-          Math.min(lastSelectedIndex, index),
-          Math.max(lastSelectedIndex, index) + 1,
+      if (event.shiftKey && lastIdx !== -1) {
+        const idx = ids.indexOf(id);
+        const range = ids.slice(
+          Math.min(lastIdx, idx),
+          Math.max(lastIdx, idx) + 1,
         );
-
-        const isClickedItemSelected = selectedIds?.includes(id);
-        const newSelectedIds = isClickedItemSelected
-          ? difference(selectedIds, idsBetweenSelections)
-          : union(selectedIds, idsBetweenSelections);
-
-        onSelect?.(newSelectedIds);
+        const isSelected = selectedIds?.includes(id);
+        onSelect?.(
+          isSelected
+            ? difference(selectedIds, range)
+            : union(selectedIds, range),
+        );
       } else {
         onToggleItem(id);
       }
-
       lastSelected.current = id;
     },
     [contacts, selectedIds, onSelect, onToggleItem],
   );
 
-  if (isPending) {
-    return <Skeleton className="w-full h-9" />;
-  }
-
-  if (error) {
-    return null;
-  }
+  if (isPending) return <Skeleton className="w-full h-9" />;
+  if (error) return null;
 
   return (
-    <div className="md:divide-y">
+    <div>
+      {/* Table header */}
+      <div className="grid grid-cols-[40px_1fr_160px_100px_140px_80px] items-center px-2 py-2 border-b text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+        <div />
+        <div>{translate("resources.contacts.name", { smart_count: 1 })}</div>
+        <div>{translate("resources.companies.name", { smart_count: 1 })}</div>
+        <div>{translate("resources.notes.fields.status")}</div>
+        <div>
+          {translate("crm.common.last_activity", {
+            _: "Dernière activité",
+          })}
+        </div>
+        <div>
+          {translate("resources.contacts.fields.sales_id", {
+            _: "Resp.",
+          })}
+        </div>
+      </div>
+
+      {/* Table body */}
       {contacts.map((contact) => (
         <RecordContextProvider key={contact.id} value={contact}>
-          <ContactItemContent
+          <ContactRow
             contact={contact}
             handleToggleItem={handleToggleItem}
           />
@@ -88,34 +97,32 @@ export const ContactListContent = () => {
       ))}
 
       {contacts.length === 0 && (
-        <div className="p-4">
-          <div className="text-muted-foreground">
-            {translate("resources.contacts.empty.title", {})}
-          </div>
+        <div className="p-4 text-muted-foreground">
+          {translate("resources.contacts.empty.title", {})}
         </div>
       )}
     </div>
   );
 };
 
-const ContactItemContent = ({
+const ContactRow = ({
   contact,
   handleToggleItem,
 }: {
   contact: Contact;
   handleToggleItem: (id: Identifier, event: MouseEvent) => void;
 }) => {
-  const translate = useTranslate();
   const [locale = "en"] = useLocaleState();
   const { selectedIds } = useListContext<Contact>();
   const lastActivity = contact.last_seen
     ? formatRelativeDate(contact.last_seen, locale)
-    : null;
+    : "";
 
   return (
-    <div className="flex flex-row items-center pl-2 pr-4 py-2 hover:bg-muted transition-colors first:rounded-t-xl last:rounded-b-xl">
+    <div className="grid grid-cols-[40px_1fr_160px_100px_140px_80px] items-center px-2 py-2.5 border-b border-border/50 hover:bg-muted/50 transition-colors">
+      {/* Checkbox */}
       <div
-        className="px-4 py-3 flex items-center cursor-pointer"
+        className="flex items-center justify-center cursor-pointer"
         onClick={(e) => handleToggleItem(contact.id, e)}
       >
         <Checkbox
@@ -123,73 +130,78 @@ const ContactItemContent = ({
           checked={selectedIds.includes(contact.id)}
         />
       </div>
+
+      {/* Contact name + tag */}
       <Link
         to={`/contacts/${contact.id}/show`}
-        className="flex-1 flex flex-row gap-4 items-center"
+        className="flex items-center gap-3 min-w-0"
       >
-        <Avatar />
-        <div className="flex-1 min-w-0">
-          <div className="font-medium">
-            {`${contact.first_name} ${contact.last_name ?? ""}`}
+        <Avatar width={25} height={25} />
+        <div className="min-w-0">
+          <div className="text-sm font-medium truncate">
+            {contact.first_name} {contact.last_name ?? ""}
           </div>
-          {contact.title ||
-          contact.company_id != null ||
-          contact.nb_tasks ||
-          contact.nb_unread_emails ? (
-            <div className="text-sm text-muted-foreground flex flex-wrap items-center gap-x-1">
-              <span>
-                {contact.title && contact.company_id != null
-                  ? `${translate("resources.contacts.position_at", {
-                      title: contact.title,
-                    })} `
-                  : contact.title}
-                {contact.company_id != null && (
-                  <ReferenceField
-                    source="company_id"
-                    reference="companies"
-                    link={false}
-                  >
-                    <TextField source="name" />
-                  </ReferenceField>
-                )}
-                {contact.nb_tasks
-                  ? ` - ${translate("crm.common.task_count", {
-                      smart_count: contact.nb_tasks,
-                    })}`
-                  : ""}
-              </span>
-              {contact.nb_unread_emails ? (
-                <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-primary/10 text-primary text-xs font-medium">
-                  <Mail className="w-3 h-3" />
-                  {contact.nb_unread_emails}
-                </span>
-              ) : null}
-              &nbsp;
-              <TagsList />
-            </div>
-          ) : null}
+          <div className="text-xs text-muted-foreground truncate">
+            <TagsList />
+          </div>
         </div>
-        {contact.last_seen && (
-          <div className="text-right ml-4">
-            <div
-              className="text-sm text-muted-foreground"
-              title={contact.last_seen}
-            >
-              {translate("crm.common.last_activity_with_date", {
-                date: lastActivity,
-              })}{" "}
-              <Status status={contact.status} />
-            </div>
-          </div>
-        )}
       </Link>
-      <RecordButton
-        contactId={contact.id as number}
-        contactName={`${contact.first_name} ${contact.last_name ?? ""}`}
-      />
+
+      {/* Company */}
+      <div className="text-sm text-muted-foreground truncate">
+        {contact.company_id != null && (
+          <ReferenceField
+            source="company_id"
+            reference="companies"
+            link={false}
+          >
+            <TextField source="name" />
+          </ReferenceField>
+        )}
+        {contact.company_id == null && "—"}
+      </div>
+
+      {/* Status */}
+      <div>
+        <Status status={contact.status} />
+      </div>
+
+      {/* Last activity */}
+      <div className="text-xs text-muted-foreground" title={contact.last_seen}>
+        {lastActivity}
+      </div>
+
+      {/* Sales / Responsible */}
+      <div className="flex items-center justify-center">
+        {contact.sales_id != null && (
+          <ReferenceField
+            source="sales_id"
+            reference="sales"
+            link={false}
+          >
+            <SalesAvatar />
+          </ReferenceField>
+        )}
+      </div>
     </div>
   );
 };
+
+const SalesAvatar = () => {
+  const sale = useRecordContext();
+  if (!sale) return null;
+  const initials = `${(sale.first_name ?? "")[0] ?? ""}${(sale.last_name ?? "")[0] ?? ""}`.toUpperCase();
+  return (
+    <div
+      className="flex h-7 w-7 items-center justify-center rounded-full bg-primary/10 text-primary text-[10px] font-semibold"
+      title={`${sale.first_name ?? ""} ${sale.last_name ?? ""}`}
+    >
+      {initials}
+    </div>
+  );
+};
+
+/* ============ MOBILE ============ */
 
 export const ContactListContentMobile = () => {
   const translate = useTranslate();
@@ -202,15 +214,13 @@ export const ContactListContentMobile = () => {
   const oneSecondHasPassed = useTimeout(1000);
 
   if (isPending) {
-    if (!oneSecondHasPassed) {
-      return null;
-    }
+    if (!oneSecondHasPassed) return null;
     return (
       <>
         {[...Array(5)].map((_, index) => (
           <div
             key={index}
-            className="flex flex-row items-center py-2 hover:bg-muted transition-colors first:rounded-t-xl last:rounded-b-xl"
+            className="flex flex-row items-center py-2 hover:bg-muted transition-colors"
           >
             <div className="flex flex-row gap-4 items-center mr-4">
               <Skeleton className="w-10 h-10 rounded-full" />
@@ -232,11 +242,7 @@ export const ContactListContentMobile = () => {
           {translate("resources.contacts.list.error_loading")}
         </div>
         <div className="text-center mt-2">
-          <Button
-            onClick={() => {
-              refetch();
-            }}
-          >
+          <Button onClick={() => refetch()}>
             <RotateCcw />
             {translate("crm.common.retry")}
           </Button>
@@ -253,10 +259,8 @@ export const ContactListContentMobile = () => {
         </RecordContextProvider>
       ))}
       {contacts.length === 0 && (
-        <div className="p-4">
-          <div className="text-muted-foreground">
-            {translate("resources.contacts.empty.title")}
-          </div>
+        <div className="p-4 text-muted-foreground">
+          {translate("resources.contacts.empty.title")}
         </div>
       )}
     </div>
@@ -280,40 +284,26 @@ const ContactItemContentMobile = ({ contact }: { contact: Contact }) => {
             <Status status={contact.status} />
           </div>
           <div className="text-sm text-muted-foreground">
-            <div className="flex flex-col gap-1">
-              <span>
-                {contact.title && contact.company_id != null
-                  ? `${translate("resources.contacts.position_at", {
-                      title: contact.title,
-                    })} `
-                  : contact.title}
-                {contact.company_id != null && (
-                  <ReferenceField
-                    source="company_id"
-                    reference="companies"
-                    link={false}
-                  >
-                    <TextField source="name" />
-                  </ReferenceField>
-                )}
+            <span>
+              {contact.title && contact.company_id != null
+                ? `${translate("resources.contacts.position_at", { title: contact.title })} `
+                : contact.title}
+              {contact.company_id != null && (
+                <ReferenceField
+                  source="company_id"
+                  reference="companies"
+                  link={false}
+                >
+                  <TextField source="name" />
+                </ReferenceField>
+              )}
+            </span>
+            {contact.nb_unread_emails ? (
+              <span className="inline-flex w-fit items-center gap-1 px-1.5 py-0.5 rounded bg-primary/10 text-primary text-xs font-medium ml-1">
+                <Mail className="w-3 h-3" />
+                {contact.nb_unread_emails}
               </span>
-              {contact.nb_tasks ? (
-                <span>
-                  {translate("crm.common.task_count", {
-                    smart_count: contact.nb_tasks,
-                  })}
-                </span>
-              ) : null}
-              {contact.nb_unread_emails ? (
-                <span className="inline-flex w-fit items-center gap-1 px-1.5 py-0.5 rounded bg-primary/10 text-primary text-xs font-medium">
-                  <Mail className="w-3 h-3" />
-                  {contact.nb_unread_emails}{" "}
-                  {contact.nb_unread_emails > 1
-                    ? "emails non lus"
-                    : "email non lu"}
-                </span>
-              ) : null}
-            </div>
+            ) : null}
           </div>
         </div>
       </div>

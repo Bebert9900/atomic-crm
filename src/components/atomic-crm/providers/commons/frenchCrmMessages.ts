@@ -371,10 +371,31 @@ export const frenchCrmMessages = {
         name_placeholder: "Saisir le nom de l'étiquette",
       },
     },
+    contact_plans: {
+      name: "Plans Fabrik",
+      empty: "Aucun plan créé",
+      fields: {
+        name: "Nom du plan",
+        plan_type: "Type ERP",
+        status: "Statut",
+        completion_score: "Avancement",
+        format: "Format",
+        orientation: "Orientation",
+        created_at: "Créé le",
+        updated_at: "Modifié le",
+      },
+    },
   },
   crm: {
     action: {
       reset_password: "Réinitialiser le mot de passe",
+      new: "Nouveau",
+    },
+    search: {
+      placeholder: "Rechercher contact, entreprise, affaire...",
+      title: "Recherche globale",
+      description: "Rechercher un contact, une entreprise ou une affaire",
+      empty: "Aucun résultat.",
     },
     auth: {
       first_name: "Prénom",
@@ -428,19 +449,29 @@ export const frenchCrmMessages = {
       load_more: "Charger plus d'activité",
     },
     dashboard: {
+      welcome: "Bon retour, %{name}",
+      subtitle: "Voici ta priorité du jour",
       deals_chart: "Revenus des affaires à venir",
       deals_pipeline: "Pipeline des affaires",
-      latest_activity: "Dernière activité",
+      latest_activity: "Activité",
       latest_activity_error:
         "Erreur lors du chargement de la dernière activité",
       latest_notes: "Mes dernières notes",
       latest_notes_added_ago: "ajouté %{timeAgo}",
+      today_tasks: "À faire aujourd'hui",
+      no_appointments: "Aucun rendez-vous aujourd'hui",
       stepper: {
         install: "Installer Atomic CRM",
         progress: "%{step}/3 terminé",
         whats_next: "Et ensuite ?",
       },
       upcoming_tasks: "Tâches à venir",
+    },
+    sidebar: {
+      pilotage: "Pilotage",
+      sales: "Ventes",
+      my_tasks: "Mes tâches",
+      calendar: "Calendrier",
     },
     header: {
       import_data: "Importer des données",
@@ -505,6 +536,7 @@ export const frenchCrmMessages = {
       },
       preferences: "Préférences",
       title: "Paramètres",
+      subtitle: "Personnalisez votre CRM",
       app_title: "Titre de l'application",
       sections: {
         branding: "Image de marque",

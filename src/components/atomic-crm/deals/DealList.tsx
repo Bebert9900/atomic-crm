@@ -12,6 +12,7 @@ import { SearchInput } from "@/components/admin/search-input";
 import { SelectInput } from "@/components/admin/select-input";
 
 import { useConfigurationContext } from "../root/ConfigurationContext";
+import { PageHeader } from "../layout/PageHeader";
 import { TopToolbar } from "../layout/TopToolbar";
 import { DealArchivedList } from "./DealArchivedList";
 import { DealCreate } from "./DealCreate";
@@ -58,6 +59,7 @@ const DealList = () => {
       filters={dealFilters}
       actions={<DealActions />}
       pagination={null}
+      disableBreadcrumb
     >
       <DealLayout />
     </List>
@@ -66,11 +68,12 @@ const DealList = () => {
 
 const DealLayout = () => {
   const location = useLocation();
+  const translate = useTranslate();
   const matchCreate = matchPath("/deals/create", location.pathname);
   const matchShow = matchPath("/deals/:id/show", location.pathname);
   const matchEdit = matchPath("/deals/:id", location.pathname);
 
-  const { data, isPending, filterValues } = useListContext();
+  const { data, isPending, filterValues, total } = useListContext();
   const hasFilters = filterValues && Object.keys(filterValues).length > 0;
 
   if (isPending) return null;
@@ -85,13 +88,22 @@ const DealLayout = () => {
     );
 
   return (
-    <div className="w-full">
-      <DealListContent />
-      <DealArchivedList />
-      <DealCreate open={!!matchCreate} />
-      <DealEdit open={!!matchEdit && !matchCreate} id={matchEdit?.params.id} />
-      <DealShow open={!!matchShow} id={matchShow?.params.id} />
-    </div>
+    <>
+      <PageHeader
+        title={translate("resources.deals.name", { smart_count: 2 })}
+        subtitle={`${total ?? 0} ${translate("resources.deals.name", { smart_count: total ?? 2 }).toLowerCase()}`}
+      />
+      <div className="w-full">
+        <DealListContent />
+        <DealArchivedList />
+        <DealCreate open={!!matchCreate} />
+        <DealEdit
+          open={!!matchEdit && !matchCreate}
+          id={matchEdit?.params.id}
+        />
+        <DealShow open={!!matchShow} id={matchShow?.params.id} />
+      </div>
+    </>
   );
 };
 

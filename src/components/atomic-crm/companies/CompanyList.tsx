@@ -5,6 +5,7 @@ import { List } from "@/components/admin/list";
 import { ListPagination } from "@/components/admin/list-pagination";
 import { SortButton } from "@/components/admin/sort-button";
 
+import { PageHeader } from "../layout/PageHeader";
 import { TopToolbar } from "../layout/TopToolbar";
 import { CompanyEmpty } from "./CompanyEmpty";
 import { CompanyListFilter } from "./CompanyListFilter";
@@ -20,6 +21,7 @@ export const CompanyList = () => {
       sort={{ field: "name", order: "ASC" }}
       actions={<CompanyListActions />}
       pagination={<ListPagination rowsPerPageOptions={[10, 25, 50, 100]} />}
+      disableBreadcrumb
     >
       <CompanyListLayout />
     </List>
@@ -27,19 +29,26 @@ export const CompanyList = () => {
 };
 
 const CompanyListLayout = () => {
-  const { data, isPending, filterValues } = useListContext();
+  const { data, isPending, filterValues, total } = useListContext();
+  const translate = useTranslate();
   const hasFilters = filterValues && Object.keys(filterValues).length > 0;
 
   if (isPending) return null;
   if (!data?.length && !hasFilters) return <CompanyEmpty />;
 
   return (
-    <div className="w-full flex flex-row gap-8">
-      <CompanyListFilter />
-      <div className="flex flex-col flex-1 gap-4">
-        <ImageList />
+    <>
+      <PageHeader
+        title={translate("resources.companies.name", { smart_count: 2 })}
+        subtitle={`${total ?? 0} ${translate("resources.companies.name", { smart_count: total ?? 2 }).toLowerCase()}`}
+      />
+      <div className="w-full flex flex-row gap-8">
+        <CompanyListFilter />
+        <div className="flex flex-col flex-1 gap-4">
+          <ImageList />
+        </div>
       </div>
-    </div>
+    </>
   );
 };
 

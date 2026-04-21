@@ -365,10 +365,31 @@ export const englishCrmMessages = {
         name_placeholder: "Enter tag name",
       },
     },
+    contact_plans: {
+      name: "Fabrik Plans",
+      empty: "No plans created",
+      fields: {
+        name: "Plan name",
+        plan_type: "ERP type",
+        status: "Status",
+        completion_score: "Completion",
+        format: "Format",
+        orientation: "Orientation",
+        created_at: "Created at",
+        updated_at: "Updated at",
+      },
+    },
   },
   crm: {
     action: {
       reset_password: "Reset Password",
+      new: "New",
+    },
+    search: {
+      placeholder: "Search contact, company, deal...",
+      title: "Global search",
+      description: "Search for a contact, company, or deal",
+      empty: "No results.",
     },
     auth: {
       first_name: "First name",
@@ -422,18 +443,28 @@ export const englishCrmMessages = {
       load_more: "Load more activity",
     },
     dashboard: {
+      welcome: "Welcome back, %{name}",
+      subtitle: "Here are your priorities for today",
       deals_chart: "Upcoming Deal Revenue",
       deals_pipeline: "Deals Pipeline",
-      latest_activity: "Latest Activity",
+      latest_activity: "Activity",
       latest_activity_error: "Error loading latest activity",
       latest_notes: "My Latest Notes",
       latest_notes_added_ago: "added %{timeAgo}",
+      today_tasks: "Today's tasks",
+      no_appointments: "No appointments today",
       stepper: {
         install: "Install Atomic CRM",
         progress: "%{step}/3 done",
         whats_next: "What's next?",
       },
       upcoming_tasks: "Upcoming Tasks",
+    },
+    sidebar: {
+      pilotage: "Overview",
+      sales: "Sales",
+      my_tasks: "My tasks",
+      calendar: "Calendar",
     },
     header: {
       import_data: "Import data",
@@ -498,6 +529,7 @@ export const englishCrmMessages = {
       },
       preferences: "Preferences",
       title: "Settings",
+      subtitle: "Customize your CRM",
       app_title: "App Title",
       sections: {
         branding: "Branding",

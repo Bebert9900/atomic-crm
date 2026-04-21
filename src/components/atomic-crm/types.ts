@@ -282,6 +282,42 @@ export interface RAFile {
   type?: string;
 }
 
+export type PlanType =
+  | "erp-j"
+  | "erp-l"
+  | "erp-m"
+  | "erp-n"
+  | "erp-o"
+  | "erp-p"
+  | "erp-r"
+  | "erp-s"
+  | "erp-t"
+  | "erp-u"
+  | "erp-v"
+  | "erp-w"
+  | "erp-x"
+  | "erp-y"
+  | "erp-pa"
+  | "erp-ps"
+  | "non-erp"
+  | "custom";
+
+export type ContactPlan = {
+  saas_plan_id: string;
+  contact_id: Identifier;
+  name: string;
+  description: string | null;
+  plan_type: PlanType | string;
+  status: string;
+  completion_score: number | null;
+  thumbnail_url: string | null;
+  preview_url: string | null;
+  format: string;
+  orientation: string;
+  created_at: string;
+  updated_at: string;
+} & Pick<RaRecord, "id">;
+
 export type AttachmentNote = RAFile;
 
 export interface LabeledValue {

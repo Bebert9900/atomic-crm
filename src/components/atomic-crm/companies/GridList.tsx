@@ -7,12 +7,9 @@ const times = (nbChildren: number, fn: (key: number) => any) =>
   Array.from({ length: nbChildren }, (_, key) => fn(key));
 
 const LoadingGridList = () => (
-  <div className="flex flex-wrap w-[1008px] gap-1">
-    {times(15, (key) => (
-      <div
-        className="h-[200px] w-[194px] flex flex-col bg-gray-200"
-        key={key}
-      />
+  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+    {times(8, (key) => (
+      <div className="h-[160px] rounded-lg bg-muted animate-pulse" key={key} />
     ))}
   </div>
 );
@@ -24,12 +21,7 @@ const LoadedGridList = () => {
   if (isPending || error) return null;
 
   return (
-    <div
-      className="w-full gap-2 grid"
-      style={{
-        gridTemplateColumns: "repeat(auto-fill, minmax(180px, 1fr))",
-      }}
-    >
+    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
       {data.map((record) => (
         <RecordContextProvider key={record.id} value={record}>
           <CompanyCard />
@@ -37,7 +29,7 @@ const LoadedGridList = () => {
       ))}
 
       {data.length === 0 && (
-        <div className="p-2">
+        <div className="p-2 col-span-full text-muted-foreground">
           {translate("resources.companies.empty.title", {
             _: "No companies found",
           })}

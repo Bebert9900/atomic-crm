@@ -4,6 +4,7 @@ import {
   InfiniteListBase,
   useGetIdentity,
   useListContext,
+  useTranslate,
   type Exporter,
 } from "ra-core";
 import { BulkActionsToolbar } from "@/components/admin/bulk-actions-toolbar";
@@ -28,6 +29,7 @@ import {
   ContactListFilterSummary,
   ContactListFilter,
 } from "./ContactListFilter";
+import { PageHeader } from "../layout/PageHeader";
 import { TopToolbar } from "../layout/TopToolbar";
 import { InfinitePagination } from "../misc/InfinitePagination";
 import MobileHeader from "../layout/MobileHeader";
@@ -45,6 +47,7 @@ export const ContactList = () => {
       perPage={25}
       sort={{ field: "last_seen", order: "DESC" }}
       exporter={exporter}
+      disableBreadcrumb
     >
       <ContactListLayoutDesktop />
     </List>
@@ -52,7 +55,8 @@ export const ContactList = () => {
 };
 
 const ContactListLayoutDesktop = () => {
-  const { data, isPending, filterValues } = useListContext();
+  const { data, isPending, filterValues, total } = useListContext();
+  const translate = useTranslate();
 
   const hasFilters = filterValues && Object.keys(filterValues).length > 0;
 
@@ -61,17 +65,23 @@ const ContactListLayoutDesktop = () => {
   if (!data?.length && !hasFilters) return <ContactEmpty />;
 
   return (
-    <div className="flex flex-row gap-8">
-      <ContactListFilter />
-      <div className="w-full flex flex-col gap-4">
-        <Card className="py-0">
-          <ContactListContent />
-        </Card>
+    <>
+      <PageHeader
+        title={translate("resources.contacts.name", { smart_count: 2 })}
+        subtitle={`${total ?? 0} contacts`}
+      />
+      <div className="flex flex-row gap-8">
+        <ContactListFilter />
+        <div className="w-full flex flex-col gap-4">
+          <Card className="py-0">
+            <ContactListContent />
+          </Card>
+        </div>
+        <BulkActionsToolbar>
+          <ContactBulkActionButtons />
+        </BulkActionsToolbar>
       </div>
-      <BulkActionsToolbar>
-        <ContactBulkActionButtons />
-      </BulkActionsToolbar>
-    </div>
+    </>
   );
 };
 

@@ -20,6 +20,7 @@ import { AutocompleteInput } from "@/components/admin/autocomplete-input";
 import { SimpleFormIterator } from "@/components/admin/simple-form-iterator";
 import { TextInput } from "@/components/admin/text-input";
 
+import { PageHeader } from "../layout/PageHeader";
 import ImageEditorField from "../misc/ImageEditorField";
 import {
   useConfigurationContext,
@@ -245,13 +246,17 @@ const SettingsFormFields = () => {
   );
 
   return (
-    <div className="flex gap-8 mt-4 pb-20">
+    <div className="flex flex-col gap-4 pb-20">
+      <PageHeader
+        title={translate("crm.settings.title")}
+        subtitle={translate("crm.settings.subtitle", {
+          _: "Personnalisez votre CRM",
+        })}
+      />
+      <div className="flex gap-8">
       {/* Left navigation */}
       <nav className="hidden md:block w-48 shrink-0">
         <div className="sticky top-4 space-y-1">
-          <h1 className="text-2xl font-semibold px-3 mb-2">
-            {translate("crm.settings.title")}
-          </h1>
           {SECTIONS.map((section) => (
             <button
               key={section.id}
@@ -462,6 +467,7 @@ const SettingsFormFields = () => {
             </ArrayInput>
           </CardContent>
         </Card>
+      </div>
       </div>
 
       {/* Sticky save button */}
