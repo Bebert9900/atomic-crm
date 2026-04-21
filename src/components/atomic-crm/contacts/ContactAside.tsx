@@ -27,8 +27,8 @@ export const ContactAside = ({ link = "edit" }: { link?: "edit" | "show" }) => {
   if (!record) return null;
 
   return (
-    <div className="hidden sm:block w-92 min-w-92 text-sm">
-      <div className="mb-4 -ml-1">
+    <div className="hidden sm:block w-80 min-w-80 text-sm space-y-4">
+      <div className="flex items-center gap-2">
         {link === "edit" ? (
           <EditButton label="resources.contacts.action.edit" />
         ) : (

@@ -1,5 +1,4 @@
 import type { ReactNode } from "react";
-import { Separator } from "@/components/ui/separator";
 import { cn } from "@/lib/utils";
 import { useIsMobile } from "@/hooks/use-mobile";
 
@@ -12,14 +11,18 @@ export type AsideSectionProps = {
 export function AsideSection({ title, children, noGap }: AsideSectionProps) {
   const isMobile = useIsMobile();
   return (
-    <div className="mb-6 text-sm">
-      <h3 className={isMobile ? "text-lg font-semibold" : "font-medium pb-1"}>
+    <div className="mb-5 text-sm">
+      <h3
+        className={cn(
+          "pb-2",
+          isMobile
+            ? "text-base font-semibold"
+            : "text-[11px] font-semibold uppercase tracking-wider text-muted-foreground",
+        )}
+      >
         {title}
       </h3>
-      <Separator />
-      <div className={cn("pt-2 flex flex-col", { "gap-1": !noGap })}>
-        {children}
-      </div>
+      <div className={cn("flex flex-col", { "gap-1": !noGap })}>{children}</div>
     </div>
   );
 }

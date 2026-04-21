@@ -46,6 +46,10 @@
           "type": "registry:component"
         },
         {
+          "path": "src/components/atomic-crm/tasks/TasksPage.tsx",
+          "type": "registry:component"
+        },
+        {
           "path": "src/components/atomic-crm/tasks/TasksListFilter.tsx",
           "type": "registry:component"
         },
@@ -358,7 +362,15 @@
           "type": "registry:component"
         },
         {
+          "path": "src/components/atomic-crm/plans/ContactPlansList.tsx",
+          "type": "registry:component"
+        },
+        {
           "path": "src/components/atomic-crm/notes/utils.ts",
+          "type": "registry:component"
+        },
+        {
+          "path": "src/components/atomic-crm/notes/parseEmailNote.ts",
           "type": "registry:component"
         },
         {
@@ -415,6 +427,10 @@
         },
         {
           "path": "src/components/atomic-crm/notes/Note.tsx",
+          "type": "registry:component"
+        },
+        {
+          "path": "src/components/atomic-crm/notes/EmailNoteCard.tsx",
           "type": "registry:component"
         },
         {
@@ -526,6 +542,14 @@
           "type": "registry:component"
         },
         {
+          "path": "src/components/atomic-crm/layout/Sidebar.tsx",
+          "type": "registry:component"
+        },
+        {
+          "path": "src/components/atomic-crm/layout/PageHeader.tsx",
+          "type": "registry:component"
+        },
+        {
           "path": "src/components/atomic-crm/layout/MobileNavigation.tsx",
           "type": "registry:component"
         },
@@ -550,7 +574,15 @@
           "type": "registry:component"
         },
         {
+          "path": "src/components/atomic-crm/layout/GlobalSearchBar.tsx",
+          "type": "registry:component"
+        },
+        {
           "path": "src/components/atomic-crm/layout/FormToolbar.tsx",
+          "type": "registry:component"
+        },
+        {
+          "path": "src/components/atomic-crm/layout/CreateDropdown.tsx",
           "type": "registry:component"
         },
         {
@@ -634,7 +666,19 @@
           "type": "registry:component"
         },
         {
+          "path": "src/components/atomic-crm/dashboard/TodayTasks.tsx",
+          "type": "registry:component"
+        },
+        {
+          "path": "src/components/atomic-crm/dashboard/TodayAgenda.tsx",
+          "type": "registry:component"
+        },
+        {
           "path": "src/components/atomic-crm/dashboard/TasksList.tsx",
+          "type": "registry:component"
+        },
+        {
+          "path": "src/components/atomic-crm/dashboard/PipelinePulse.tsx",
           "type": "registry:component"
         },
         {
@@ -643,6 +687,10 @@
         },
         {
           "path": "src/components/atomic-crm/dashboard/LatestNotes.tsx",
+          "type": "registry:component"
+        },
+        {
+          "path": "src/components/atomic-crm/dashboard/KpiCards.tsx",
           "type": "registry:component"
         },
         {

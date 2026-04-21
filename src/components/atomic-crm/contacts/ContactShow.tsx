@@ -247,67 +247,83 @@ const ContactShowContent = () => {
   if (isPending || !record) return null;
 
   return (
-    <div className="mt-2 mb-2 flex gap-8">
-      <div className="flex-1">
-        <Card>
-          <CardContent>
-            <div className="flex">
-              <Avatar />
-              <div className="ml-2 flex-1">
-                <h5 className="text-xl font-semibold">
-                  <RecordRepresentation />
-                </h5>
-                <div className="inline-flex text-sm text-muted-foreground">
-                  {record.title && record.company_id != null
-                    ? `${translate("resources.contacts.position_at", {
-                        title: record.title,
-                      })} `
-                    : record.title}
-                  {record.company_id != null && (
-                    <ReferenceField
-                      source="company_id"
-                      reference="companies"
-                      link="show"
-                    >
-                      &nbsp;
-                      <TextField source="name" />
-                    </ReferenceField>
-                  )}
-                </div>
-              </div>
-              <div>
-                <ReferenceField
-                  source="company_id"
-                  reference="companies"
-                  link="show"
-                  className="no-underline"
-                >
-                  <CompanyAvatar />
-                </ReferenceField>
-              </div>
+    <div className="flex flex-col gap-4">
+      {/* Contact header card */}
+      <Card>
+        <CardContent className="py-5">
+          <div className="flex items-center gap-4">
+            <Avatar />
+            <div className="flex-1 min-w-0">
+              <h2 className="text-xl font-semibold leading-tight">
+                <RecordRepresentation />
+              </h2>
+              <p className="text-sm text-muted-foreground mt-0.5">
+                {record.title && record.company_id != null
+                  ? `${translate("resources.contacts.position_at", {
+                      title: record.title,
+                    })} `
+                  : record.title}
+                {record.company_id != null && (
+                  <ReferenceField
+                    source="company_id"
+                    reference="companies"
+                    link="show"
+                  >
+                    <TextField source="name" />
+                  </ReferenceField>
+                )}
+              </p>
             </div>
-            <InfiniteListBase
-              resource="contact_notes"
-              filter={{ contact_id: record.id }}
-              sort={{ field: "date", order: "DESC" }}
-              perPage={25}
-              disableSyncWithLocation
-              storeKey={false}
-              empty={
-                <NoteCreate reference="contacts" showStatus className="mt-4" />
-              }
+            <ReferenceField
+              source="company_id"
+              reference="companies"
+              link="show"
+              className="no-underline"
             >
-              <NotesIterator reference="contacts" showStatus />
-            </InfiniteListBase>
-            <Separator className="my-6" />
-            <h3 className="text-lg font-semibold mb-3">
-              Historique des emails
-            </h3>
-            <ContactEmails />
-          </CardContent>
-        </Card>
+              <CompanyAvatar />
+            </ReferenceField>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Two-column layout: main content + aside */}
+      <div className="flex gap-6">
+        <div className="flex-1 min-w-0 flex flex-col gap-4">
+          <Card>
+            <CardContent className="py-5">
+              <InfiniteListBase
+                resource="contact_notes"
+                filter={{ contact_id: record.id }}
+                sort={{ field: "date", order: "DESC" }}
+                perPage={25}
+                disableSyncWithLocation
+                storeKey={false}
+                empty={
+                  <NoteCreate
+                    reference="contacts"
+                    showStatus
+                    className="mt-0"
+                  />
+                }
+              >
+                <NotesIterator reference="contacts" showStatus />
+              </InfiniteListBase>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardContent className="py-5">
+              <h3 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground mb-4">
+                {translate("resources.contacts.fields.email", {
+                  _: "Historique des emails",
+                })}
+              </h3>
+              <ContactEmails />
+            </CardContent>
+          </Card>
+        </div>
+        <ContactAside />
       </div>
-      <ContactAside />
     </div>
   );
 };

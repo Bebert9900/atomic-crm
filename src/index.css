@@ -186,3 +186,109 @@ input[type="time"] {
 body {
   font-family: "Inter Variable", ui-sans-serif, system-ui, sans-serif;
 }
+
+/* ─── Schedule-X calendar theme integration ─── */
+.calendar-wrapper .sx__calendar {
+  font-family: "Inter Variable", ui-sans-serif, system-ui, sans-serif;
+  --sx-color-surface: var(--card);
+  --sx-color-on-surface: var(--card-foreground);
+  border: none;
+}
+
+/* Toolbar styling */
+.calendar-wrapper .sx__calendar-header {
+  background: transparent;
+  padding: 0.75rem 1rem;
+  border-bottom: 1px solid var(--border);
+}
+
+.calendar-wrapper .sx__date-input {
+  font-size: 1.125rem;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+
+.calendar-wrapper .sx__today-button,
+.calendar-wrapper .sx__forward-backward-navigation button {
+  font-size: 0.8125rem;
+  font-weight: 500;
+  border-radius: 0.375rem;
+  border: 1px solid var(--border);
+  background: transparent;
+  padding: 0.25rem 0.75rem;
+  transition: background-color 0.15s;
+}
+
+.calendar-wrapper .sx__today-button:hover,
+.calendar-wrapper .sx__forward-backward-navigation button:hover {
+  background: var(--muted);
+}
+
+/* View toggle buttons */
+.calendar-wrapper .sx__view-selection button {
+  font-size: 0.8125rem;
+  font-weight: 500;
+  border-radius: 0.375rem;
+  padding: 0.25rem 0.75rem;
+  transition: background-color 0.15s;
+}
+
+/* Month grid */
+.calendar-wrapper .sx__month-grid-day__header-date {
+  font-size: 0.8125rem;
+  font-weight: 500;
+}
+
+.calendar-wrapper .sx__month-grid-day {
+  border-color: var(--border);
+}
+
+.calendar-wrapper .sx__month-grid-wrapper {
+  border-color: var(--border);
+}
+
+/* Events in month grid */
+.calendar-wrapper .sx__month-grid-event {
+  font-size: 0.75rem;
+  font-weight: 500;
+  border-radius: 0.25rem;
+  padding: 0.125rem 0.375rem;
+}
+
+/* Week/Day header */
+.calendar-wrapper .sx__week-grid__day-name,
+.calendar-wrapper .sx__month-grid-day__header-day-name {
+  font-size: 0.6875rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--muted-foreground);
+}
+
+/* Dark mode specifics */
+.calendar-wrapper.is-dark .sx__calendar {
+  background: var(--card);
+  color: var(--card-foreground);
+}
+
+.calendar-wrapper.is-dark .sx__month-grid-day {
+  border-color: var(--border);
+}
+
+.calendar-wrapper.is-dark .sx__month-grid-wrapper {
+  border-color: var(--border);
+}
+
+.calendar-wrapper.is-dark .sx__today-button,
+.calendar-wrapper.is-dark .sx__forward-backward-navigation button {
+  color: var(--card-foreground);
+  border-color: var(--border);
+}
+
+.calendar-wrapper.is-dark .sx__view-selection button {
+  color: var(--muted-foreground);
+}
+
+.calendar-wrapper.is-dark .sx__date-input {
+  color: var(--card-foreground);
+}

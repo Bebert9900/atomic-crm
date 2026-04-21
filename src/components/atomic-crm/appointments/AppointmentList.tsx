@@ -11,10 +11,8 @@ import {
 import "@schedule-x/theme-default/dist/index.css";
 
 import { useTheme } from "@/components/admin/use-theme";
-import { Card } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 import type { Appointment } from "../types";
-import { PageHeader } from "../layout/PageHeader";
 import { AppointmentCreateSheet } from "./AppointmentCreateSheet";
 import { AppointmentEditSheet } from "./AppointmentEditSheet";
 
@@ -24,8 +22,8 @@ const DEFAULT_APPOINTMENT_START_HOUR = 9;
 const DEFAULT_APPOINTMENT_DURATION_HOURS = 1;
 
 const statusColors: Record<string, string> = {
-  scheduled: "#3b82f6",
-  completed: "#10b981",
+  scheduled: "#22c55e",
+  completed: "#3b82f6",
   cancelled: "#ef4444",
 };
 
@@ -131,26 +129,26 @@ export const AppointmentList = () => {
         colorName: "scheduled",
         lightColors: {
           main: statusColors.scheduled,
-          container: "#dbeafe",
-          onContainer: "#1e3a8a",
+          container: "#dcfce7",
+          onContainer: "#14532d",
         },
         darkColors: {
           main: statusColors.scheduled,
-          container: "#1e3a8a",
-          onContainer: "#dbeafe",
+          container: "#14532d",
+          onContainer: "#dcfce7",
         },
       },
       completed: {
         colorName: "completed",
         lightColors: {
           main: statusColors.completed,
-          container: "#d1fae5",
-          onContainer: "#064e3b",
+          container: "#dbeafe",
+          onContainer: "#1e3a8a",
         },
         darkColors: {
           main: statusColors.completed,
-          container: "#064e3b",
-          onContainer: "#d1fae5",
+          container: "#1e3a8a",
+          onContainer: "#dbeafe",
         },
       },
       cancelled: {
@@ -196,22 +194,40 @@ export const AppointmentList = () => {
     }
   }, [events, calendar]);
 
+  const handleCreateClick = () => {
+    setDefaultStart(undefined);
+    setDefaultEnd(undefined);
+    setCreateOpen(true);
+  };
+
   return (
-    <div className="flex flex-col gap-4">
-      <PageHeader
-        title={translate("crm.sidebar.calendar", { _: "Calendrier" })}
-        subtitle={translate("crm.calendar.view_label", { _: "Vue du mois" })}
-      />
-      <Card className="p-4">
-        <div
-          className={cn(
-            "h-[700px] [&_.sx-react-calendar-wrapper]:h-full [&_.sx__calendar-wrapper]:h-full [&_.sx__calendar]:h-full",
-            isDarkMode && "is-dark",
-          )}
-        >
+    <div className="flex flex-col gap-0">
+      <div
+        className={cn(
+          "calendar-wrapper rounded-lg border border-border bg-card overflow-hidden",
+          "[&_.sx-react-calendar-wrapper]:h-full [&_.sx__calendar-wrapper]:h-full [&_.sx__calendar]:h-full",
+          isDarkMode && "is-dark",
+        )}
+      >
+        {/* Custom create button overlaid on calendar toolbar */}
+        <div className="relative">
+          <div className="absolute right-3 top-2.5 z-20">
+            <button
+              type="button"
+              onClick={handleCreateClick}
+              className="inline-flex items-center gap-1.5 rounded-md bg-primary px-3 py-1.5 text-sm font-medium text-primary-foreground shadow-sm hover:bg-primary/90 transition-colors"
+            >
+              <span className="text-base leading-none">+</span>
+              {translate("resources.appointments.action.create", {
+                _: "Événement",
+              })}
+            </button>
+          </div>
+        </div>
+        <div className="h-[700px]">
           <ScheduleXCalendar calendarApp={calendar} />
         </div>
-      </Card>
+      </div>
 
       <AppointmentCreateSheet
         open={createOpen}

@@ -109,80 +109,105 @@ const CompanyShowContent = () => {
   if (isPending || !record) return null;
 
   return (
-    <div className="mt-2 flex pb-2 gap-8">
-      <div className="flex-1">
-        <Card>
-          <CardContent>
-            <div className="flex mb-3">
-              <CompanyAvatar />
-              <h5 className="text-xl ml-2 flex-1">{record.name}</h5>
+    <div className="flex flex-col gap-4">
+      {/* Company header card */}
+      <Card>
+        <CardContent className="py-5">
+          <div className="flex items-center gap-4">
+            <CompanyAvatar />
+            <div className="flex-1 min-w-0">
+              <h2 className="text-xl font-semibold leading-tight">
+                {record.name}
+              </h2>
+              {record.sector && (
+                <p className="text-sm text-muted-foreground mt-0.5">
+                  {record.sector}
+                </p>
+              )}
             </div>
-            <Tabs defaultValue={currentTab} onValueChange={handleTabChange}>
-              <TabsList className="grid w-full grid-cols-3">
-                <TabsTrigger value="activity">
-                  {translate("crm.common.activity")}
-                </TabsTrigger>
-                <TabsTrigger value="contacts">
-                  {record.nb_contacts === 0
-                    ? translate("resources.companies.no_contacts")
-                    : translate("resources.companies.nb_contacts", {
-                        smart_count: record.nb_contacts ?? 0,
-                      })}
-                </TabsTrigger>
-                {record.nb_deals ? (
-                  <TabsTrigger value="deals">
-                    {translate("resources.companies.nb_deals", {
-                      smart_count: record.nb_deals ?? 0,
-                    })}
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Two-column layout: tabs + aside */}
+      <div className="flex gap-6">
+        <div className="flex-1 min-w-0">
+          <Card>
+            <CardContent className="py-5">
+              <Tabs
+                defaultValue={currentTab}
+                onValueChange={handleTabChange}
+              >
+                <TabsList className="grid w-full grid-cols-3">
+                  <TabsTrigger value="activity">
+                    {translate("crm.common.activity")}
                   </TabsTrigger>
-                ) : null}
-              </TabsList>
-              <TabsContent value="activity" className="pt-2">
-                <ActivityLog companyId={record.id} context="company" />
-              </TabsContent>
-              <TabsContent value="contacts">
-                {record.nb_contacts ? (
-                  <ReferenceManyField
-                    reference="contacts_summary"
-                    target="company_id"
-                    sort={{ field: "last_name", order: "ASC" }}
-                  >
+                  <TabsTrigger value="contacts">
+                    {record.nb_contacts === 0
+                      ? translate("resources.companies.no_contacts")
+                      : translate("resources.companies.nb_contacts", {
+                          smart_count: record.nb_contacts ?? 0,
+                        })}
+                  </TabsTrigger>
+                  {record.nb_deals ? (
+                    <TabsTrigger value="deals">
+                      {translate("resources.companies.nb_deals", {
+                        smart_count: record.nb_deals ?? 0,
+                      })}
+                    </TabsTrigger>
+                  ) : null}
+                </TabsList>
+                <TabsContent value="activity" className="pt-4">
+                  <ActivityLog companyId={record.id} context="company" />
+                </TabsContent>
+                <TabsContent value="contacts" className="pt-4">
+                  {record.nb_contacts ? (
+                    <ReferenceManyField
+                      reference="contacts_summary"
+                      target="company_id"
+                      sort={{ field: "last_name", order: "ASC" }}
+                    >
+                      <div className="flex flex-col gap-4">
+                        <div className="flex flex-row justify-end space-x-2">
+                          {!!record.nb_contacts && (
+                            <SortButton
+                              fields={[
+                                "last_name",
+                                "first_name",
+                                "last_seen",
+                              ]}
+                            />
+                          )}
+                          <CreateRelatedContactButton />
+                        </div>
+                        <ContactsIterator />
+                      </div>
+                    </ReferenceManyField>
+                  ) : (
                     <div className="flex flex-col gap-4">
-                      <div className="flex flex-row justify-end space-x-2 mt-1">
-                        {!!record.nb_contacts && (
-                          <SortButton
-                            fields={["last_name", "first_name", "last_seen"]}
-                          />
-                        )}
+                      <div className="flex flex-row justify-end space-x-2">
                         <CreateRelatedContactButton />
                       </div>
-                      <ContactsIterator />
                     </div>
-                  </ReferenceManyField>
-                ) : (
-                  <div className="flex flex-col gap-4">
-                    <div className="flex flex-row justify-end space-x-2 mt-1">
-                      <CreateRelatedContactButton />
-                    </div>
-                  </div>
-                )}
-              </TabsContent>
-              <TabsContent value="deals">
-                {record.nb_deals ? (
-                  <ReferenceManyField
-                    reference="deals"
-                    target="company_id"
-                    sort={{ field: "name", order: "ASC" }}
-                  >
-                    <DealsIterator />
-                  </ReferenceManyField>
-                ) : null}
-              </TabsContent>
-            </Tabs>
-          </CardContent>
-        </Card>
+                  )}
+                </TabsContent>
+                <TabsContent value="deals" className="pt-4">
+                  {record.nb_deals ? (
+                    <ReferenceManyField
+                      reference="deals"
+                      target="company_id"
+                      sort={{ field: "name", order: "ASC" }}
+                    >
+                      <DealsIterator />
+                    </ReferenceManyField>
+                  ) : null}
+                </TabsContent>
+              </Tabs>
+            </CardContent>
+          </Card>
+        </div>
+        <CompanyAside />
       </div>
-      <CompanyAside />
     </div>
   );
 };
@@ -196,45 +221,39 @@ const ContactsIterator = () => {
   if (isPending || error) return null;
 
   return (
-    <div className="pt-0">
+    <div className="divide-y divide-border/50">
       {contacts.map((contact) => (
         <RecordContextProvider key={contact.id} value={contact}>
-          <div className="p-0 text-sm">
-            <RouterLink
-              to={`/contacts/${contact.id}/show`}
-              state={{ from: location.pathname }}
-              className="flex items-center justify-between hover:bg-muted py-2 transition-colors"
-            >
-              <div className="mr-4">
-                <Avatar />
+          <RouterLink
+            key={contact.id}
+            to={`/contacts/${contact.id}/show`}
+            state={{ from: location.pathname }}
+            className="flex items-center gap-3 py-3 px-2 hover:bg-muted/50 rounded-md transition-colors"
+          >
+            <Avatar width={25} height={25} />
+            <div className="flex-1 min-w-0">
+              <div className="text-sm font-medium truncate">
+                {contact.first_name} {contact.last_name}
               </div>
-              <div className="flex-1 min-w-0">
-                <div className="font-medium">
-                  {`${contact.first_name} ${contact.last_name}`}
-                </div>
-                <div className="text-sm text-muted-foreground">
-                  {contact.title}
-                  {contact.nb_tasks
-                    ? ` - ${translate("crm.common.task_count", {
-                        smart_count: contact.nb_tasks ?? 0,
-                      })}`
-                    : ""}
-                  &nbsp; &nbsp;
-                  <TagsList />
-                </div>
+              <div className="text-xs text-muted-foreground truncate">
+                {contact.title}
+                {contact.nb_tasks
+                  ? ` · ${translate("crm.common.task_count", {
+                      smart_count: contact.nb_tasks ?? 0,
+                    })}`
+                  : ""}
+                <TagsList />
               </div>
-              {contact.last_seen && (
-                <div className="text-right">
-                  <div className="text-sm text-muted-foreground">
-                    {translate("crm.common.last_activity_with_date", {
-                      date: formatRelativeDate(contact.last_seen, locale),
-                    })}{" "}
-                    <Status status={contact.status} />
-                  </div>
-                </div>
-              )}
-            </RouterLink>
-          </div>
+            </div>
+            {contact.last_seen && (
+              <div className="flex items-center gap-2 shrink-0">
+                <span className="text-xs text-muted-foreground">
+                  {formatRelativeDate(contact.last_seen, locale)}
+                </span>
+                <Status status={contact.status} />
+              </div>
+            )}
+          </RouterLink>
         </RecordContextProvider>
       ))}
     </div>
@@ -259,47 +278,39 @@ const CreateRelatedContactButton = () => {
 };
 
 const DealsIterator = () => {
-  const translate = useTranslate();
   const [locale = "en"] = useLocaleState();
   const { data: deals, error, isPending } = useListContext<Deal>();
   const { dealStages, dealCategories, currency } = useConfigurationContext();
   if (isPending || error) return null;
   return (
-    <div>
-      <div>
-        {deals.map((deal) => (
-          <div key={deal.id} className="p-0 text-sm">
-            <RouterLink
-              to={`/deals/${deal.id}/show`}
-              className="flex items-center justify-between hover:bg-muted py-2 px-4 transition-colors"
-            >
-              <div className="flex-1 min-w-0">
-                <div className="font-medium">{deal.name}</div>
-                <div className="text-sm text-muted-foreground">
-                  {findDealLabel(dealStages, deal.stage)},{" "}
-                  {deal.amount.toLocaleString("en-US", {
-                    notation: "compact",
-                    style: "currency",
-                    currency,
-                    currencyDisplay: "narrowSymbol",
-                    minimumSignificantDigits: 3,
-                  })}
-                  {deal.category
-                    ? `, ${dealCategories.find((c) => c.value === deal.category)?.label ?? deal.category}`
-                    : ""}
-                </div>
-              </div>
-              <div className="text-right">
-                <div className="text-sm text-muted-foreground">
-                  {translate("crm.common.last_activity_with_date", {
-                    date: formatRelativeDate(deal.updated_at, locale),
-                  })}{" "}
-                </div>
-              </div>
-            </RouterLink>
+    <div className="divide-y divide-border/50">
+      {deals.map((deal) => (
+        <RouterLink
+          key={deal.id}
+          to={`/deals/${deal.id}/show`}
+          className="flex items-center gap-3 py-3 px-2 hover:bg-muted/50 rounded-md transition-colors"
+        >
+          <div className="flex-1 min-w-0">
+            <div className="text-sm font-medium truncate">{deal.name}</div>
+            <div className="text-xs text-muted-foreground">
+              {findDealLabel(dealStages, deal.stage)} ·{" "}
+              {deal.amount.toLocaleString("en-US", {
+                notation: "compact",
+                style: "currency",
+                currency,
+                currencyDisplay: "narrowSymbol",
+                minimumSignificantDigits: 3,
+              })}
+              {deal.category
+                ? ` · ${dealCategories.find((c) => c.value === deal.category)?.label ?? deal.category}`
+                : ""}
+            </div>
           </div>
-        ))}
-      </div>
+          <span className="text-xs text-muted-foreground shrink-0">
+            {formatRelativeDate(deal.updated_at, locale)}
+          </span>
+        </RouterLink>
+      ))}
     </div>
   );
 };
