@@ -17,6 +17,7 @@
 import "dotenv/config";
 import { createClient } from "@supabase/supabase-js";
 import { ImapFlow } from "imapflow";
+import { simpleParser } from "mailparser";
 
 const SUPABASE_URL = process.env.SUPABASE_URL;
 const SUPABASE_SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
@@ -172,7 +173,30 @@ async function syncFolder({ account, client, folderName, contactMap }) {
       }
 
       const from = fromList[0] || { email: "", name: null };
-      const bodyText = msg.source ? msg.source.toString("utf8") : null;
+      let textBody = null;
+      let htmlBody = null;
+      if (msg.source) {
+        try {
+          const parsed = await simpleParser(msg.source);
+          textBody = parsed.text || null;
+          htmlBody = parsed.html || null;
+          if (!textBody && htmlBody) {
+            textBody = htmlBody
+              .replace(/<style[\s\S]*?<\/style>/gi, "")
+              .replace(/<script[\s\S]*?<\/script>/gi, "")
+              .replace(/<[^>]+>/g, " ")
+              .replace(/&nbsp;/g, " ")
+              .replace(/&amp;/g, "&")
+              .replace(/&lt;/g, "<")
+              .replace(/&gt;/g, ">")
+              .replace(/\s+\n/g, "\n")
+              .replace(/\n{3,}/g, "\n\n")
+              .trim();
+          }
+        } catch (e) {
+          console.error("Parse error for uid", msg.uid, e.message);
+        }
+      }
 
       const row = {
         message_id: env.messageId || `uid-${account.id}-${folderName}-${msg.uid}`,
@@ -183,8 +207,8 @@ async function syncFolder({ account, client, folderName, contactMap }) {
         to_emails: toList,
         cc_emails: ccList.length > 0 ? ccList : null,
         subject: env.subject || null,
-        text_body: bodyText,
-        html_body: null,
+        text_body: textBody,
+        html_body: htmlBody,
         date: (env.date || new Date()).toISOString(),
         is_read: folderName !== "INBOX" || (msg.flags && msg.flags.has("\\Seen")),
         contact_id: match.contact_id,
