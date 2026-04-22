@@ -7,6 +7,10 @@ import { DateTimeInput } from "@/components/admin";
 
 import { contactOptionText } from "../misc/ContactOption";
 import { useConfigurationContext } from "../root/ConfigurationContext";
+import type { Sale } from "../types";
+
+const saleOptionText = (sale: Sale) =>
+  `${sale.first_name} ${sale.last_name}`.trim();
 
 export const TaskFormContent = ({
   selectContact,
@@ -36,7 +40,7 @@ export const TaskFormContent = ({
         </ReferenceInput>
       )}
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <DateTimeInput
           source="due_date"
           helperText={false}
@@ -51,6 +55,17 @@ export const TaskFormContent = ({
           defaultValue="none"
           helperText={false}
         />
+        <ReferenceInput
+          source="sales_id"
+          reference="sales"
+          sort={{ field: "last_name", order: "ASC" }}
+        >
+          <SelectInput
+            validate={required()}
+            helperText={false}
+            optionText={saleOptionText}
+          />
+        </ReferenceInput>
       </div>
     </div>
   );

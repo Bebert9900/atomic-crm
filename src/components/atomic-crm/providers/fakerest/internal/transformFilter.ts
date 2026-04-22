@@ -23,6 +23,12 @@ export function transformFilter(filter: Record<string, any>) {
       continue;
     }
 
+    if (key.endsWith("@ilike")) {
+      transformedFilters["q"] =
+        typeof value === "string" ? value.replace(/%/g, "") : value;
+      continue;
+    }
+
     if (key.endsWith("@is")) {
       transformedFilters[`${key.slice(0, -3)}_eq`] = value;
       continue;

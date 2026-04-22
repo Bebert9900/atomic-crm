@@ -190,6 +190,18 @@ export const englishCrmMessages = {
         title: "Hot Contacts",
       },
     },
+    dev_tasks: {
+      name: "Ticket |||| Tickets",
+      fields: {
+        title: "Title",
+        description: "Description",
+        status: "Status",
+        priority: "Priority",
+        assignee_id: "Assignee",
+        due_date: "Due date",
+        label_ids: "Labels",
+      },
+    },
     deals: {
       name: "Deal |||| Deals",
       fields: {
@@ -291,6 +303,12 @@ export const englishCrmMessages = {
         email: "Email",
         administrator: "Admin",
         disabled: "Disabled",
+        task_performance: "Task performance",
+        assigned_tasks: "Assigned",
+        completed_tasks: "Completed",
+        pending_tasks: "Pending",
+        overdue_tasks: "Overdue",
+        completion_rate: "Completion rate",
       },
       create: {
         error: "An error occurred while creating the user.",
@@ -316,6 +334,7 @@ export const englishCrmMessages = {
         due_date: "Due date",
         type: "Type",
         contact_id: "Contact",
+        sales_id: "Assignee",
         due_short: "due",
       },
       action: {
@@ -348,7 +367,10 @@ export const englishCrmMessages = {
         tomorrow: "Tomorrow",
         with_pending: "With pending tasks",
       },
+      assigned_to: "assigned to %{name}",
+      assigned_to_you: "assigned to you",
       regarding_contact: "(Re: %{name})",
+      unassigned: "unassigned",
       updated: "Task updated",
     },
     tags: {

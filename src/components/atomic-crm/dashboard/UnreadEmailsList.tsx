@@ -1,9 +1,12 @@
-import { Mail } from "lucide-react";
+import { ChevronDown, ChevronUp, Mail } from "lucide-react";
+import { useState } from "react";
 import { useGetList, useTranslate, useUpdate } from "ra-core";
 import { useNavigate } from "react-router";
 import { Card } from "@/components/ui/card";
 
 import type { UnreadEmail } from "../types";
+
+const DEFAULT_VISIBLE = 3;
 
 function formatRelativeDate(iso: string) {
   const date = new Date(iso);
@@ -23,9 +26,10 @@ export const UnreadEmailsList = () => {
   const translate = useTranslate();
   const navigate = useNavigate();
   const [update] = useUpdate();
+  const [expanded, setExpanded] = useState(false);
 
   const { data, isPending } = useGetList<UnreadEmail>("unread_emails_summary", {
-    pagination: { page: 1, perPage: 10 },
+    pagination: { page: 1, perPage: 20 },
     sort: { field: "date", order: "DESC" },
   });
 
@@ -40,6 +44,10 @@ export const UnreadEmailsList = () => {
     }
   };
 
+  const list = data ?? [];
+  const visible = expanded ? list : list.slice(0, DEFAULT_VISIBLE);
+  const hasMore = list.length > DEFAULT_VISIBLE;
+
   return (
     <div className="flex flex-col gap-2">
       <div className="flex items-center">
@@ -49,52 +57,73 @@ export const UnreadEmailsList = () => {
         <h2 className="text-xl font-semibold text-muted-foreground flex-1">
           {translate("crm.dashboard.unread_emails", { _: "Emails non lus" })}
         </h2>
-        {data && data.length > 0 ? (
-          <span className="text-sm text-muted-foreground">{data.length}</span>
+        {list.length > 0 ? (
+          <span className="text-sm text-muted-foreground">{list.length}</span>
         ) : null}
       </div>
       <Card className="p-4">
         {isPending ? (
           <p className="text-sm text-muted-foreground">Chargement…</p>
-        ) : !data || data.length === 0 ? (
+        ) : list.length === 0 ? (
           <p className="text-sm text-muted-foreground">
             Aucun email non lu pour le moment.
           </p>
         ) : (
-          <ul className="flex flex-col divide-y">
-            {data.map((email) => {
-              const contactName =
-                email.contact_first_name || email.contact_last_name
-                  ? `${email.contact_first_name ?? ""} ${email.contact_last_name ?? ""}`.trim()
-                  : email.from_name || email.from_email;
-              return (
-                <li key={email.id}>
-                  <button
-                    type="button"
-                    onClick={() => handleClick(email)}
-                    className="w-full text-left py-2 flex flex-col gap-0.5 hover:bg-muted/40 rounded px-1 transition-colors"
-                  >
-                    <div className="flex items-baseline gap-2">
-                      <span className="font-medium text-sm truncate">
-                        {contactName}
-                      </span>
-                      <span className="text-xs text-muted-foreground ml-auto shrink-0">
-                        {formatRelativeDate(email.date)}
-                      </span>
-                    </div>
-                    <p className="text-sm text-muted-foreground truncate">
-                      {email.subject || "(sans objet)"}
-                    </p>
-                    {email.account_email ? (
-                      <p className="text-xs text-muted-foreground/70 truncate">
-                        → {email.account_email}
+          <>
+            <ul className="flex flex-col divide-y">
+              {visible.map((email) => {
+                const contactName =
+                  email.contact_first_name || email.contact_last_name
+                    ? `${email.contact_first_name ?? ""} ${email.contact_last_name ?? ""}`.trim()
+                    : email.from_name || email.from_email;
+                return (
+                  <li key={email.id}>
+                    <button
+                      type="button"
+                      onClick={() => handleClick(email)}
+                      className="w-full text-left py-2 flex flex-col gap-0.5 hover:bg-muted/40 rounded px-1 transition-colors"
+                    >
+                      <div className="flex items-baseline gap-2">
+                        <span className="font-medium text-sm truncate">
+                          {contactName}
+                        </span>
+                        <span className="text-xs text-muted-foreground ml-auto shrink-0">
+                          {formatRelativeDate(email.date)}
+                        </span>
+                      </div>
+                      <p className="text-sm text-muted-foreground truncate">
+                        {email.subject || "(sans objet)"}
                       </p>
-                    ) : null}
-                  </button>
-                </li>
-              );
-            })}
-          </ul>
+                      {email.account_email ? (
+                        <p className="text-xs text-muted-foreground/70 truncate">
+                          → {email.account_email}
+                        </p>
+                      ) : null}
+                    </button>
+                  </li>
+                );
+              })}
+            </ul>
+            {hasMore && (
+              <button
+                type="button"
+                onClick={() => setExpanded((v) => !v)}
+                className="mt-3 w-full flex items-center justify-center gap-1 text-xs text-muted-foreground hover:text-foreground py-1.5 rounded hover:bg-muted/40 transition-colors"
+              >
+                {expanded ? (
+                  <>
+                    <ChevronUp className="size-3.5" />
+                    Réduire
+                  </>
+                ) : (
+                  <>
+                    <ChevronDown className="size-3.5" />
+                    Voir tout ({list.length})
+                  </>
+                )}
+              </button>
+            )}
+          </>
         )}
       </Card>
     </div>

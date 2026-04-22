@@ -72,6 +72,7 @@ export const buildContact = (overrides: Partial<Contact> = {}): Contact => ({
   status: "warm",
   tags: [],
   title: "CTO",
+  lead_source: "unknown",
   ...overrides,
 });
 

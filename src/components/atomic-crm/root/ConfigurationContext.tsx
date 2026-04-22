@@ -1,7 +1,13 @@
 import { useMemo } from "react";
 import { useStore } from "ra-core";
 
-import type { DealStage, LabeledValue, NoteStatus } from "../types";
+import type {
+  DealStage,
+  DevTaskPriority,
+  DevTaskStatus,
+  LabeledValue,
+  NoteStatus,
+} from "../types";
 import { defaultConfiguration } from "./defaultConfiguration";
 
 export const CONFIGURATION_STORE_KEY = "app.configuration";
@@ -12,6 +18,8 @@ export interface ConfigurationContextValue {
   dealCategories: LabeledValue[];
   dealPipelineStatuses: string[];
   dealStages: DealStage[];
+  devTaskStatuses: DevTaskStatus[];
+  devTaskPriorities: DevTaskPriority[];
   noteStatuses: NoteStatus[];
   taskTypes: LabeledValue[];
   title: string;

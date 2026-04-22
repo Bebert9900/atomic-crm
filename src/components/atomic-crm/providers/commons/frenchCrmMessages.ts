@@ -195,6 +195,18 @@ export const frenchCrmMessages = {
         title: "Contacts chauds",
       },
     },
+    dev_tasks: {
+      name: "Ticket |||| Tickets",
+      fields: {
+        title: "Titre",
+        description: "Description",
+        status: "Statut",
+        priority: "Priorité",
+        assignee_id: "Assigné à",
+        due_date: "Échéance",
+        label_ids: "Labels",
+      },
+    },
     deals: {
       name: "Affaire |||| Affaires",
       fields: {
@@ -296,6 +308,12 @@ export const frenchCrmMessages = {
         email: "E-mail",
         administrator: "Admin",
         disabled: "Désactivé",
+        task_performance: "Performance sur les tâches",
+        assigned_tasks: "Assignées",
+        completed_tasks: "Terminées",
+        pending_tasks: "En cours",
+        overdue_tasks: "En retard",
+        completion_rate: "Taux de complétion",
       },
       create: {
         error:
@@ -322,6 +340,7 @@ export const frenchCrmMessages = {
         due_date: "Date d'échéance",
         type: "Type",
         contact_id: "Contact",
+        sales_id: "Assigné à",
         due_short: "échéance",
       },
       action: {
@@ -354,7 +373,10 @@ export const frenchCrmMessages = {
         tomorrow: "Demain",
         with_pending: "Avec des tâches en attente",
       },
+      assigned_to: "assignée à %{name}",
+      assigned_to_you: "assignée à vous",
       regarding_contact: "(Concernant : %{name})",
+      unassigned: "non assignée",
       updated: "Tâche mise à jour",
     },
     tags: {

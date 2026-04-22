@@ -107,3 +107,9 @@ create or replace trigger on_auth_user_created
 create or replace trigger on_auth_user_updated
     after update on auth.users
     for each row execute function public.handle_update_user();
+
+-- Keep dev_tasks.updated_at in sync
+create or replace trigger dev_tasks_updated_at
+    before update on public.dev_tasks
+    for each row execute function public.dev_tasks_set_updated_at();
+

@@ -48,6 +48,16 @@ export type Sale = {
   password?: string;
 } & Pick<RaRecord, "id">;
 
+export type LeadSource =
+  | "outbound"
+  | "referral"
+  | "partner"
+  | "manual"
+  | "email_campaign"
+  | "seo"
+  | "other"
+  | "unknown";
+
 export type Company = {
   name: string;
   logo: RAFile;
@@ -69,6 +79,8 @@ export type Company = {
   context_links?: string[];
   nb_contacts?: number;
   nb_deals?: number;
+  lead_source: LeadSource;
+  stripe_customer_id?: string | null;
 } & Pick<RaRecord, "id">;
 
 export type EmailAndType = {
@@ -101,6 +113,7 @@ export type Contact = {
   nb_tasks?: number;
   nb_unread_emails?: number;
   company_name?: string;
+  lead_source: LeadSource;
 } & Pick<RaRecord, "id">;
 
 export type ContactNote = {
@@ -126,6 +139,7 @@ export type Deal = {
   expected_closing_date: string;
   sales_id: Identifier;
   index: number;
+  lead_source: LeadSource;
 } & Pick<RaRecord, "id">;
 
 export type DealNote = {
@@ -291,6 +305,36 @@ export interface LabeledValue {
 
 export type DealStage = LabeledValue;
 
+export type DevTaskStatus = LabeledValue;
+
+export interface DevTaskPriority extends LabeledValue {
+  icon: string;
+  colorClass: string;
+}
+
+export type DevTask = {
+  title: string;
+  description: string | null;
+  status: string;
+  priority: string;
+  index: number;
+  assignee_id: Identifier | null;
+  due_date: string | null;
+  label_ids: Identifier[];
+  contact_id: Identifier | null;
+  company_id: Identifier | null;
+  deal_id: Identifier | null;
+  archived_at: string | null;
+  created_at: string;
+  updated_at: string;
+} & Pick<RaRecord, "id">;
+
+export type DevTaskLabel = {
+  name: string;
+  color: string;
+  created_at: string;
+} & Pick<RaRecord, "id">;
+
 export interface NoteStatus extends LabeledValue {
   color: string;
 }
@@ -300,3 +344,42 @@ export interface ContactGender {
   label: string;
   icon: ComponentType<{ className?: string }>;
 }
+
+export type Payment = {
+  stripe_event_id: string;
+  stripe_object_id: string;
+  stripe_customer_id: string | null;
+  company_id: Identifier | null;
+  deal_id: Identifier | null;
+  type: string;
+  status: string | null;
+  amount: number;
+  amount_refunded: number;
+  currency: string;
+  description: string | null;
+  invoice_number: string | null;
+  hosted_invoice_url: string | null;
+  receipt_url: string | null;
+  occurred_at: string;
+  metadata: Record<string, unknown>;
+  created_at: string;
+} & Pick<RaRecord, "id">;
+
+export type Subscription = {
+  stripe_subscription_id: string;
+  stripe_customer_id: string;
+  company_id: Identifier | null;
+  status: string;
+  product_name: string | null;
+  amount: number | null;
+  currency: string | null;
+  recurring_interval: string | null;
+  current_period_start: string | null;
+  current_period_end: string | null;
+  cancel_at_period_end: boolean;
+  canceled_at: string | null;
+  started_at: string | null;
+  metadata: Record<string, unknown>;
+  updated_at: string;
+  created_at: string;
+} & Pick<RaRecord, "id">;

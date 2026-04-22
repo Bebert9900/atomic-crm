@@ -51,7 +51,8 @@ describe("TaskCreateSheet", () => {
       .getByLabelText(/description/i)
       .fill("Follow up about onboarding");
 
-    const [contactInput, typeInput] = screen.getByRole("combobox").all();
+    const contactInput = screen.getByLabelText(/contact/i);
+    const typeInput = screen.getByLabelText(/type/i);
 
     await contactInput.click();
     await screen.getByText("Grace Hopper").click();

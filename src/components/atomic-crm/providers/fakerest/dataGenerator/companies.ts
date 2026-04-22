@@ -48,6 +48,14 @@ export const generateCompanies = (db: Db, size = 55): Required<Company>[] => {
       tax_identifier: random.alphaNumeric(10),
       country: random.arrayElement(["USA", "France", "UK"]),
       context_links: [],
+      lead_source: random.arrayElement([
+        "outbound",
+        "referral",
+        "partner",
+        "manual",
+        "seo",
+        "unknown",
+      ]) as Company["lead_source"],
     };
   });
 };

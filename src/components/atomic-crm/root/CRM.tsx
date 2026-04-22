@@ -21,6 +21,7 @@ import contacts from "../contacts";
 import { Dashboard } from "../dashboard/Dashboard";
 import { MobileDashboard } from "../dashboard/MobileDashboard";
 import deals from "../deals";
+import devTasks from "../dev-tasks";
 import { Layout } from "../layout/Layout";
 import { MobileLayout } from "../layout/MobileLayout";
 import { SignupPage } from "../login/SignupPage";
@@ -47,6 +48,8 @@ import {
   defaultDealCategories,
   defaultDealPipelineStatuses,
   defaultDealStages,
+  defaultDevTaskPriorities,
+  defaultDevTaskStatuses,
   defaultLightModeLogo,
   defaultNoteStatuses,
   defaultTaskTypes,
@@ -60,6 +63,8 @@ import { ContactListMobile } from "../contacts/ContactList.tsx";
 import { ContactShow } from "../contacts/ContactShow.tsx";
 import { CompanyShow } from "../companies/CompanyShow.tsx";
 import { NoteShowPage } from "../notes/NoteShowPage.tsx";
+import { TasksPage } from "../tasks/TasksPage.tsx";
+import { MyDayPage } from "../dashboard/MyDayPage.tsx";
 
 const defaultStore = localStorageStore(undefined, "CRM");
 
@@ -119,6 +124,8 @@ export const CRM = ({
   dealCategories = defaultDealCategories,
   dealPipelineStatuses = defaultDealPipelineStatuses,
   dealStages = defaultDealStages,
+  devTaskStatuses = defaultDevTaskStatuses,
+  devTaskPriorities = defaultDevTaskPriorities,
   darkModeLogo = defaultDarkModeLogo,
   lightModeLogo = defaultLightModeLogo,
   noteStatuses = defaultNoteStatuses,
@@ -158,6 +165,8 @@ export const CRM = ({
         dealCategories,
         dealPipelineStatuses,
         dealStages,
+        devTaskStatuses,
+        devTaskPriorities,
         noteStatuses,
         taskTypes,
         title,
@@ -265,8 +274,12 @@ const DesktopAdmin = (
         <Route path={SettingsPage.path} element={<SettingsPage />} />
         <Route path={EmailAccountsPage.path} element={<EmailAccountsPage />} />
         <Route path={ImportPage.path} element={<ImportPage />} />
+        <Route path={TasksPage.path} element={<TasksPage />} />
+        <Route path={MyDayPage.path} element={<MyDayPage />} />
       </CustomRoutes>
       <Resource name="deals" {...deals} />
+      <Resource name="dev_tasks" {...devTasks} />
+      <Resource name="dev_task_labels" />
       <Resource name="contacts" {...contacts} />
       <Resource name="companies" {...companies} />
       <Resource name="contact_notes" />
@@ -276,6 +289,8 @@ const DesktopAdmin = (
       <Resource name="appointments" {...appointments} />
       <Resource name="sales" {...sales} />
       <Resource name="tags" />
+      <Resource name="payments" />
+      <Resource name="subscriptions" />
       <Resource name="email_accounts" />
       <Resource name="email_messages" />
       <Resource name="unread_emails_summary" />

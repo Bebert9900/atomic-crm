@@ -1,0 +1,14 @@
+[
+  {
+    "kty": "EC",
+    "kid": "YOUR-KEY-ID-HERE",
+    "use": "sig",
+    "key_ops": ["sign", "verify"],
+    "alg": "ES256",
+    "ext": true,
+    "d": "YOUR-PRIVATE-KEY-D-PARAM-HERE",
+    "crv": "P-256",
+    "x": "YOUR-PUBLIC-KEY-X-HERE",
+    "y": "YOUR-PUBLIC-KEY-Y-HERE"
+  }
+]

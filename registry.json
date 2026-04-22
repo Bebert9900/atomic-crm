@@ -362,6 +362,10 @@
           "type": "registry:component"
         },
         {
+          "path": "src/components/atomic-crm/notes/parseEmailNote.ts",
+          "type": "registry:component"
+        },
+        {
           "path": "src/components/atomic-crm/notes/noteModel.ts",
           "type": "registry:component"
         },
@@ -415,6 +419,10 @@
         },
         {
           "path": "src/components/atomic-crm/notes/Note.tsx",
+          "type": "registry:component"
+        },
+        {
+          "path": "src/components/atomic-crm/notes/EmailNoteCard.tsx",
           "type": "registry:component"
         },
         {

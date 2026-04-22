@@ -51,3 +51,6 @@ node_modules/
 /playwright/.cache/
 /playwright/.auth/
 scripts/email-sync.env
+
+# Signing keys — NEVER commit private keys
+supabase/signing_keys.json

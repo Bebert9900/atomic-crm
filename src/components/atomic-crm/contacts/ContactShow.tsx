@@ -20,6 +20,7 @@ import { Link } from "react-router";
 import MobileHeader from "../layout/MobileHeader";
 import { MobileContent } from "../layout/MobileContent";
 import { CompanyAvatar } from "../companies/CompanyAvatar";
+import { CompanyPayments } from "../companies/CompanyPayments";
 import { NoteCreate, NotesIterator, NotesIteratorMobile } from "../notes";
 import { NoteCreateSheet } from "../notes/NoteCreateSheet";
 import { TagsListEdit } from "./TagsListEdit";
@@ -304,6 +305,15 @@ const ContactShowContent = () => {
               Historique des emails
             </h3>
             <ContactEmails />
+            {record.company_id != null && (
+              <>
+                <Separator className="my-6" />
+                <h3 className="text-lg font-semibold mb-3">
+                  Paiements de l'entreprise
+                </h3>
+                <CompanyPayments companyId={Number(record.company_id)} />
+              </>
+            )}
           </CardContent>
         </Card>
       </div>
