@@ -9,9 +9,8 @@ import {
   Sparkles,
   Sun,
   Users,
-  Zap,
 } from "lucide-react";
-import { EmailAccountsPage } from "../settings/EmailAccountsPage";
+import { EmailInboxPage } from "../emails/EmailInboxPage";
 import { CanAccess, useGetIdentity, useGetList, useTranslate } from "ra-core";
 import { Link, matchPath, useLocation } from "react-router";
 import { cn } from "@/lib/utils";
@@ -88,10 +87,10 @@ export const Sidebar = () => {
           isActive={currentPath === "/my-day"}
         />
         <NavItem
-          to={EmailAccountsPage.path}
+          to={EmailInboxPage.path}
           icon={Mail}
           label="Mail"
-          isActive={currentPath === EmailAccountsPage.path}
+          isActive={currentPath.startsWith("/mail")}
         />
         <NavItem
           to="/tasks"
