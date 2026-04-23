@@ -2,6 +2,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { MoreVertical } from "lucide-react";
 import {
   useDeleteWithUndoController,
+  useGetIdentity,
   useGetRecordRepresentation,
   useNotify,
   useTranslate,
@@ -20,7 +21,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 
 import { useConfigurationContext } from "../root/ConfigurationContext";
-import type { Contact, Task as TData } from "../types";
+import type { Contact, Sale, Task as TData } from "../types";
 import { TaskEdit } from "./TaskEdit";
 import { TaskEditSheet } from "./TaskEditSheet";
 import { useIsMobile } from "@/hooks/use-mobile";
@@ -36,6 +37,7 @@ export const Task = ({
   const { taskTypes } = useConfigurationContext();
   const notify = useNotify();
   const translate = useTranslate();
+  const { identity } = useGetIdentity();
   const queryClient = useQueryClient();
   const getContactRepresentation = useGetRecordRepresentation("contacts");
 
@@ -125,6 +127,36 @@ export const Task = ({
               {translate("resources.tasks.fields.due_short")}
               &nbsp;
               <DateField source="due_date" record={task} showDate showTime />
+              {task.sales_id == null ? (
+                <>
+                  {" "}
+                  · {translate("resources.tasks.unassigned")}
+                </>
+              ) : task.sales_id === identity?.id ? (
+                <>
+                  {" "}
+                  · {translate("resources.tasks.assigned_to_you")}
+                </>
+              ) : (
+                <ReferenceField<TData, Sale>
+                  source="sales_id"
+                  reference="sales"
+                  record={task}
+                  className="inline text-sm text-muted-foreground"
+                  render={({ referenceRecord }) => {
+                    if (!referenceRecord) return null;
+                    return (
+                      <>
+                        {" "}
+                        ·{" "}
+                        {translate("resources.tasks.assigned_to", {
+                          name: `${referenceRecord.first_name} ${referenceRecord.last_name}`,
+                        })}
+                      </>
+                    );
+                  }}
+                />
+              )}
               {showContact && (
                 <ReferenceField<TData, Contact>
                   source="contact_id"

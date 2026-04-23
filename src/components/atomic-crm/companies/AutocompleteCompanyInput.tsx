@@ -1,53 +1,62 @@
-import { useCreate, useGetIdentity, useNotify } from "ra-core";
-import { AutocompleteInput } from "@/components/admin/autocomplete-input";
+import { useRef, useState } from "react";
 import type { InputProps } from "ra-core";
-import { useIsMobile } from "@/hooks/use-mobile";
 import type { PopoverProps } from "@radix-ui/react-popover";
+import { AutocompleteInput } from "@/components/admin/autocomplete-input";
+import { useIsMobile } from "@/hooks/use-mobile";
+
+import { CompanyQuickCreateDialog } from "./CompanyQuickCreateDialog";
+import type { Company } from "../types";
+
+type CompanyResolver = (company: Company | undefined) => void;
 
 export const AutocompleteCompanyInput = ({
   validate,
   label,
   modal,
 }: Pick<InputProps, "validate" | "label"> & Pick<PopoverProps, "modal">) => {
-  const [create] = useCreate();
-  const { identity } = useGetIdentity();
-  const notify = useNotify();
-  const handleCreateCompany = async (name?: string) => {
-    if (!name) return;
-    try {
-      const newCompany = await create(
-        "companies",
-        {
-          data: {
-            name,
-            sales_id: identity?.id,
-            created_at: new Date().toISOString(),
-          },
-        },
-        { returnPromise: true },
-      );
-      return newCompany;
-    } catch {
-      notify("resources.companies.autocomplete.create_error", {
-        type: "error",
-        messageArgs: {
-          _: "An error occurred while creating the company",
-        },
-      });
-    }
-  };
   const isMobile = useIsMobile();
 
+  const [dialogOpen, setDialogOpen] = useState(false);
+  const [initialName, setInitialName] = useState("");
+  const resolverRef = useRef<CompanyResolver | null>(null);
+
+  const handleCreateCompany = (name?: string) => {
+    return new Promise<Company | undefined>((resolve) => {
+      resolverRef.current = resolve;
+      setInitialName(name ?? "");
+      setDialogOpen(true);
+    });
+  };
+
+  const handleCreated = (company: Company) => {
+    resolverRef.current?.(company);
+    resolverRef.current = null;
+  };
+
+  const handleCancel = () => {
+    resolverRef.current?.(undefined);
+    resolverRef.current = null;
+  };
+
   return (
-    <AutocompleteInput
-      label={label}
-      optionText="name"
-      helperText={false}
-      onCreate={handleCreateCompany}
-      createItemLabel="resources.companies.autocomplete.create_item"
-      createLabel="resources.companies.autocomplete.create_label"
-      validate={validate}
-      modal={modal ?? isMobile}
-    />
+    <>
+      <AutocompleteInput
+        label={label}
+        optionText="name"
+        helperText={false}
+        onCreate={handleCreateCompany}
+        createItemLabel="resources.companies.autocomplete.create_item"
+        createLabel="resources.companies.autocomplete.create_label"
+        validate={validate}
+        modal={modal ?? isMobile}
+      />
+      <CompanyQuickCreateDialog
+        open={dialogOpen}
+        onOpenChange={setDialogOpen}
+        initialName={initialName}
+        onCreated={handleCreated}
+        onCancel={handleCancel}
+      />
+    </>
   );
 };

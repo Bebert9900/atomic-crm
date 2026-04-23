@@ -41,6 +41,15 @@ export const generateDeals = (db: Db): Deal[] => {
       expected_closing_date,
       sales_id: company.sales_id!,
       index: 0,
+      lead_source: random.arrayElement([
+        "outbound",
+        "referral",
+        "partner",
+        "manual",
+        "seo",
+        "unknown",
+      ]) as Deal["lead_source"],
+      archived_at: undefined,
     };
   });
   // compute index based on stage

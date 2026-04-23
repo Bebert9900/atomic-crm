@@ -101,3 +101,29 @@ alter table public.email_sync_state enable row level security;
 create policy "Enable read for authenticated" on public.email_sync_state for select to authenticated using (true);
 create policy "Enable insert for service role" on public.email_sync_state for insert to service_role with check (true);
 create policy "Enable update for service role" on public.email_sync_state for update to service_role using (true);
+
+-- Dev Tasks
+alter table public.dev_tasks enable row level security;
+create policy "Enable read access for authenticated users" on public.dev_tasks for select to authenticated using (true);
+create policy "Enable insert for authenticated users" on public.dev_tasks for insert to authenticated with check (true);
+create policy "Enable update for authenticated users" on public.dev_tasks for update to authenticated using (true) with check (true);
+create policy "Enable delete for authenticated users" on public.dev_tasks for delete to authenticated using (true);
+
+alter table public.dev_task_labels enable row level security;
+create policy "Enable read access for authenticated users" on public.dev_task_labels for select to authenticated using (true);
+create policy "Enable insert for authenticated users" on public.dev_task_labels for insert to authenticated with check (true);
+create policy "Enable update for authenticated users" on public.dev_task_labels for update to authenticated using (true) with check (true);
+create policy "Enable delete for authenticated users" on public.dev_task_labels for delete to authenticated using (true);
+
+-- Stripe payments & subscriptions (read-only for authenticated, writes reserved to service role via webhook)
+alter table public.payments enable row level security;
+create policy "Enable read for authenticated" on public.payments for select to authenticated using (true);
+create policy "Enable insert for service role" on public.payments for insert to service_role with check (true);
+create policy "Enable update for service role" on public.payments for update to service_role using (true) with check (true);
+create policy "Enable delete for service role" on public.payments for delete to service_role using (true);
+
+alter table public.subscriptions enable row level security;
+create policy "Enable read for authenticated" on public.subscriptions for select to authenticated using (true);
+create policy "Enable insert for service role" on public.subscriptions for insert to service_role with check (true);
+create policy "Enable update for service role" on public.subscriptions for update to service_role using (true) with check (true);
+create policy "Enable delete for service role" on public.subscriptions for delete to service_role using (true);

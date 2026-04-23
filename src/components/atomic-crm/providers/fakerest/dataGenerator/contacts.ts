@@ -97,6 +97,13 @@ export const generateContacts = (db: Db, size = 500): Required<Contact>[] => {
       nb_tasks: 0,
       nb_unread_emails: 0,
       linkedin_url: null,
+      lead_source: random.arrayElement([
+        "outbound",
+        "referral",
+        "manual",
+        "seo",
+        "unknown",
+      ]) as Contact["lead_source"],
     };
   });
 };

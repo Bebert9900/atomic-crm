@@ -65,6 +65,10 @@ grant all on function public.set_sales_id_default() to anon;
 grant all on function public.set_sales_id_default() to authenticated;
 grant all on function public.set_sales_id_default() to service_role;
 
+grant all on function public.dev_tasks_set_updated_at() to anon;
+grant all on function public.dev_tasks_set_updated_at() to authenticated;
+grant all on function public.dev_tasks_set_updated_at() to service_role;
+
 -- Table grants
 grant all on table public.companies to anon;
 grant all on table public.companies to authenticated;
@@ -199,6 +203,30 @@ grant all on sequence public.email_messages_id_seq to service_role;
 grant all on sequence public.email_sync_state_id_seq to anon;
 grant all on sequence public.email_sync_state_id_seq to authenticated;
 grant all on sequence public.email_sync_state_id_seq to service_role;
+
+grant all on table public.dev_tasks to anon;
+grant all on table public.dev_tasks to authenticated;
+grant all on table public.dev_tasks to service_role;
+
+grant all on table public.dev_task_labels to anon;
+grant all on table public.dev_task_labels to authenticated;
+grant all on table public.dev_task_labels to service_role;
+
+grant all on sequence public.dev_tasks_id_seq to anon;
+grant all on sequence public.dev_tasks_id_seq to authenticated;
+grant all on sequence public.dev_tasks_id_seq to service_role;
+
+grant all on sequence public.dev_task_labels_id_seq to anon;
+grant all on sequence public.dev_task_labels_id_seq to authenticated;
+grant all on sequence public.dev_task_labels_id_seq to service_role;
+
+grant select on table public.payments to authenticated;
+grant all on table public.payments to service_role;
+grant all on sequence public.payments_id_seq to service_role;
+
+grant select on table public.subscriptions to authenticated;
+grant all on table public.subscriptions to service_role;
+grant all on sequence public.subscriptions_id_seq to service_role;
 
 -- Default privileges
 alter default privileges for role postgres in schema public grant all on sequences to postgres;
