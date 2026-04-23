@@ -9,6 +9,7 @@ import { ContactAppointmentsList } from "../appointments/ContactAppointmentsList
 import { ContactPlansList } from "../plans/ContactPlansList";
 import { ContactRecordingsList } from "../recordings/ContactRecordingsList";
 import { RecordButton } from "../recordings/RecordButton";
+import { ContactVideoConferencesList } from "../video-conferences/VideoConferencesList";
 import { AddTask } from "../tasks/AddTask";
 import { TasksIterator } from "../tasks/TasksIterator";
 import { TagsListEdit } from "./TagsListEdit";
@@ -90,6 +91,10 @@ export const ContactAside = ({ link = "edit" }: { link?: "edit" | "show" }) => {
             contactName={`${record.first_name ?? ""} ${record.last_name ?? ""}`.trim()}
           />
         </div>
+      </AsideSection>
+
+      <AsideSection title="Visioconférences">
+        <ContactVideoConferencesList contactId={record.id as number} />
       </AsideSection>
 
       <div className="my-4">
