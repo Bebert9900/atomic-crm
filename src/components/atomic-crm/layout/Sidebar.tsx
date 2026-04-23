@@ -90,7 +90,9 @@ export const Sidebar = () => {
           to={EmailInboxPage.path}
           icon={Mail}
           label="Mail"
-          isActive={currentPath.startsWith("/mail")}
+          isActive={
+            typeof currentPath === "string" && currentPath.startsWith("/mail")
+          }
         />
         <NavItem
           to="/tasks"
