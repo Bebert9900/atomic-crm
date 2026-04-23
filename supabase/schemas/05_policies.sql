@@ -138,3 +138,44 @@ create policy "skill_runs_update_own" on public.skill_runs
     for update to authenticated using (user_id = auth.uid()) with check (user_id = auth.uid());
 create policy "skill_runs_service_all" on public.skill_runs
     for all to service_role using (true) with check (true);
+
+-- Agentic: circuit breaker (admins only via app; service_role for runtime)
+alter table public.agentic_circuit_state enable row level security;
+create policy "agentic_circuit_state_select_admin" on public.agentic_circuit_state
+    for select to authenticated using (
+        exists (select 1 from public.sales
+                where user_id = auth.uid() and administrator)
+    );
+create policy "agentic_circuit_state_update_admin" on public.agentic_circuit_state
+    for update to authenticated using (
+        exists (select 1 from public.sales
+                where user_id = auth.uid() and administrator)
+    ) with check (
+        exists (select 1 from public.sales
+                where user_id = auth.uid() and administrator)
+    );
+create policy "agentic_circuit_state_service_all" on public.agentic_circuit_state
+    for all to service_role using (true) with check (true);
+
+-- Agentic: tenant settings (admins only)
+alter table public.tenant_settings enable row level security;
+create policy "tenant_settings_select_admin" on public.tenant_settings
+    for select to authenticated using (
+        exists (select 1 from public.sales
+                where user_id = auth.uid() and administrator)
+    );
+create policy "tenant_settings_update_admin" on public.tenant_settings
+    for update to authenticated using (
+        exists (select 1 from public.sales
+                where user_id = auth.uid() and administrator)
+    ) with check (
+        exists (select 1 from public.sales
+                where user_id = auth.uid() and administrator)
+    );
+create policy "tenant_settings_insert_admin" on public.tenant_settings
+    for insert to authenticated with check (
+        exists (select 1 from public.sales
+                where user_id = auth.uid() and administrator)
+    );
+create policy "tenant_settings_service_all" on public.tenant_settings
+    for all to service_role using (true) with check (true);

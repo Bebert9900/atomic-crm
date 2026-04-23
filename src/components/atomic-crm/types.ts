@@ -384,6 +384,30 @@ export type Subscription = {
   created_at: string;
 } & Pick<RaRecord, "id">;
 
+// Agentic: tenant settings
+export type TenantSettings = {
+  tenant_id: string;
+  agentic_enabled: boolean;
+  agentic_enabled_skills: string[];
+  agentic_usage_limits: {
+    per_day?: number;
+    per_month?: number;
+    max_cost_usd_per_month?: number;
+  };
+  stripe_subscription_id?: string | null;
+  created_at: string;
+  updated_at: string;
+};
+
+// Agentic: circuit breaker state
+export type AgenticCircuitState = {
+  skill_id: string;
+  state: "closed" | "open" | "half_open";
+  opened_at: string | null;
+  last_check_at: string;
+  consecutive_errors: number;
+};
+
 // Agentic: skill runs
 export type SkillRunStatus =
   | "running"

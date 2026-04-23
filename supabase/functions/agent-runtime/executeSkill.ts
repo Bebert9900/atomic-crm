@@ -14,6 +14,11 @@ import {
   isShadowEnforced,
 } from "../_shared/guardrails/killSwitch.ts";
 import { checkTenantAccess } from "../_shared/guardrails/tenantAccess.ts";
+import { checkTenantMonthlyLimits } from "../_shared/guardrails/tenantLimits.ts";
+import {
+  checkCircuit,
+  recordOutcome,
+} from "../_shared/guardrails/circuitBreaker.ts";
 
 export async function handleRun(
   req: Request,
@@ -42,6 +47,22 @@ export async function handleRun(
     return Response.json(
       { error: "kill_switch", reason: kill.reason },
       { status: 503 },
+    );
+  }
+  const circuit = await checkCircuit(manifest.id).catch(() => ({
+    ok: true as const,
+  }));
+  if (!circuit.ok) {
+    return Response.json(
+      { error: "circuit_open", reason: circuit.reason },
+      { status: 503 },
+    );
+  }
+  const tenantLim = await checkTenantMonthlyLimits(auth.token, auth.tenantId);
+  if (!tenantLim.ok) {
+    return Response.json(
+      { error: "tenant_limit", reason: tenantLim.reason },
+      { status: 429 },
     );
   }
   const tenantAcc = await checkTenantAccess(
@@ -134,6 +155,7 @@ export async function handleRun(
 
   (async () => {
     send({ event: "run.started", data: { run_id: runId, dry_run } });
+    let finalOk = false;
     try {
       if (manifest.execute) {
         const output = await manifest.execute(execCtx);
@@ -162,6 +184,7 @@ export async function handleRun(
           data: { run_id: runId, output: result.output, usage: result.usage },
         });
       }
+      finalOk = true;
     } catch (err) {
       await finalizeRun(auth.token, runId, {
         status: "error",
@@ -173,6 +196,10 @@ export async function handleRun(
         data: { run_id: runId, error: String(err) },
       });
     } finally {
+      // Circuit breaker: record outcome (non-blocking)
+      recordOutcome(manifest.id, finalOk).catch((e) =>
+        console.error("circuitBreaker.recordOutcome", e),
+      );
       close();
     }
   })();

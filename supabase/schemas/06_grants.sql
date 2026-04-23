@@ -252,3 +252,12 @@ grant select on public.skill_runs_metrics_1d to authenticated;
 
 grant all on function public.append_skill_run_trace(bigint, jsonb) to authenticated;
 grant all on function public.append_skill_run_trace(bigint, jsonb) to service_role;
+
+grant select, update on public.agentic_circuit_state to authenticated;
+grant all on public.agentic_circuit_state to service_role;
+
+grant select, insert, update on public.tenant_settings to authenticated;
+grant all on public.tenant_settings to service_role;
+
+grant select on public.tenant_usage_daily to authenticated;
+grant select on public.tenant_usage_monthly to authenticated;

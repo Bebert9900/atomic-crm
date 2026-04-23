@@ -429,3 +429,28 @@ create index if not exists skill_runs_status_running_idx
     on public.skill_runs (status) where status = 'running';
 create index if not exists skill_runs_tenant_id_started_at_idx
     on public.skill_runs (tenant_id, started_at desc) where tenant_id is not null;
+
+-- Agentic: circuit breaker state (Story C.2)
+create table public.agentic_circuit_state (
+    skill_id text primary key,
+    state text not null default 'closed'
+        check (state in ('closed','open','half_open')),
+    opened_at timestamptz,
+    last_check_at timestamptz not null default now(),
+    consecutive_errors int not null default 0
+);
+
+-- Agentic: tenant settings (Story D.1)
+create table public.tenant_settings (
+    tenant_id uuid primary key,
+    agentic_enabled boolean not null default false,
+    agentic_enabled_skills text[] not null default '{}'::text[],
+    agentic_usage_limits jsonb not null default
+        '{"per_day":500,"per_month":10000,"max_cost_usd_per_month":100}'::jsonb,
+    stripe_subscription_id text,
+    created_at timestamptz not null default now(),
+    updated_at timestamptz not null default now()
+);
+
+create index if not exists tenant_settings_agentic_enabled_idx
+    on public.tenant_settings (agentic_enabled) where agentic_enabled;

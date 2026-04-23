@@ -156,3 +156,32 @@ from public.skill_runs
 where started_at > now() - interval '24 hours'
 group by 1, 2;
 
+-- Agentic: usage per tenant (Story D.3)
+create or replace view public.tenant_usage_daily with (security_invoker = on) as
+select
+    coalesce(tenant_id::text, 'internal') as tenant_key,
+    tenant_id,
+    date_trunc('day', started_at)::date as day,
+    count(*) as runs,
+    count(*) filter (where status = 'success') as successes,
+    count(*) filter (where status = 'error') as errors,
+    count(*) filter (where status = 'shadow') as shadow_runs,
+    sum(input_tokens) as input_tokens,
+    sum(output_tokens) as output_tokens,
+    sum(cache_read_tokens) as cache_read_tokens,
+    sum(cache_creation_tokens) as cache_creation_tokens,
+    sum(cost_usd) as cost_usd
+from public.skill_runs
+group by 1, 2, 3;
+
+create or replace view public.tenant_usage_monthly with (security_invoker = on) as
+select
+    coalesce(tenant_id::text, 'internal') as tenant_key,
+    tenant_id,
+    date_trunc('month', started_at)::date as month,
+    count(*) as runs,
+    sum(cost_usd) as cost_usd,
+    sum(input_tokens + output_tokens) as total_tokens
+from public.skill_runs
+group by 1, 2, 3;
+
