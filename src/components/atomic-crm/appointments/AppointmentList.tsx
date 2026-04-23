@@ -32,7 +32,9 @@ import {
   MapPin,
   Clock,
   User as UserIcon,
+  CheckCircle2,
 } from "lucide-react";
+import { MarkDoneDialog, type MarkDoneKind } from "../misc/MarkDoneDialog";
 
 // Fixed palette, cycled by sales id for deterministic per-user colors.
 const USER_PALETTE = [
@@ -550,6 +552,12 @@ function EventPopup({
   onOpenContact: (id: number) => void;
 }) {
   const salesById = new Map(sales.map((s) => [s.id, s]));
+  const [doneTarget, setDoneTarget] = useState<{
+    kind: MarkDoneKind;
+    id: number;
+    title: string;
+    contactId?: number | null;
+  } | null>(null);
 
   const renderAppointment = (id: number) => {
     const a = appointments.find((x) => x.id === id);
@@ -619,6 +627,22 @@ function EventPopup({
           <Button onClick={() => onEditAppointment(Number(a.id))}>
             <ExternalLink className="h-3.5 w-3.5 mr-1" /> Modifier
           </Button>
+          {a.status !== "completed" && (
+            <Button
+              variant="default"
+              className="bg-emerald-600 hover:bg-emerald-700"
+              onClick={() =>
+                setDoneTarget({
+                  kind: "appointment",
+                  id: Number(a.id),
+                  title: a.title,
+                  contactId: a.contact_id ?? null,
+                })
+              }
+            >
+              <CheckCircle2 className="h-3.5 w-3.5 mr-1" /> Fait
+            </Button>
+          )}
         </DialogFooter>
       </>
     );
@@ -672,6 +696,20 @@ function EventPopup({
               Fiche contact
             </Button>
           )}
+          <Button
+            variant="default"
+            className="bg-emerald-600 hover:bg-emerald-700"
+            onClick={() =>
+              setDoneTarget({
+                kind: "task",
+                id: Number(t.id),
+                title: t.text ?? "Tâche",
+                contactId: t.contact_id ?? null,
+              })
+            }
+          >
+            <CheckCircle2 className="h-3.5 w-3.5 mr-1" /> Fait
+          </Button>
         </DialogFooter>
       </>
     );
@@ -748,23 +786,57 @@ function EventPopup({
           <Button onClick={() => onOpenDevTask(Number(t.id))}>
             <ExternalLink className="h-3.5 w-3.5 mr-1" /> Ouvrir le ticket
           </Button>
+          {t.status !== "done" && (
+            <Button
+              variant="default"
+              className="bg-emerald-600 hover:bg-emerald-700"
+              onClick={() =>
+                setDoneTarget({
+                  kind: "devtask",
+                  id: Number(t.id),
+                  title: t.title,
+                  contactId: (t.contact_id as number | null) ?? null,
+                })
+              }
+            >
+              <CheckCircle2 className="h-3.5 w-3.5 mr-1" /> Fait
+            </Button>
+          )}
         </DialogFooter>
       </>
     );
   };
 
   return (
-    <Dialog
-      open={!!selection}
-      onOpenChange={(open) => {
-        if (!open) onClose();
-      }}
-    >
-      <DialogContent className="sm:max-w-lg">
-        {selection?.kind === "appointment" && renderAppointment(selection.id)}
-        {selection?.kind === "task" && renderTask(selection.id)}
-        {selection?.kind === "devtask" && renderDevTask(selection.id)}
-      </DialogContent>
-    </Dialog>
+    <>
+      <Dialog
+        open={!!selection}
+        onOpenChange={(open) => {
+          if (!open) onClose();
+        }}
+      >
+        <DialogContent className="sm:max-w-lg">
+          {selection?.kind === "appointment" && renderAppointment(selection.id)}
+          {selection?.kind === "task" && renderTask(selection.id)}
+          {selection?.kind === "devtask" && renderDevTask(selection.id)}
+        </DialogContent>
+      </Dialog>
+      {doneTarget && (
+        <MarkDoneDialog
+          open={!!doneTarget}
+          onOpenChange={(o) => {
+            if (!o) setDoneTarget(null);
+          }}
+          kind={doneTarget.kind}
+          id={doneTarget.id}
+          title={doneTarget.title}
+          contactId={doneTarget.contactId}
+          onDone={() => {
+            setDoneTarget(null);
+            onClose();
+          }}
+        />
+      )}
+    </>
   );
 }

@@ -108,6 +108,7 @@ export const TodayTasks = () => {
 
 function DevTaskRow({ devTask }: { devTask: DevTask }) {
   const navigate = useNavigate();
+  const [doneOpen, setDoneOpen] = useState(false);
   const dueDate = new Date(devTask.due_date!);
   const overdue = isPast(dueDate) && !isToday(dueDate);
   const today = isToday(dueDate);
@@ -127,44 +128,65 @@ function DevTaskRow({ devTask }: { devTask: DevTask }) {
   }
 
   return (
-    <li
-      className={cn(
-        "flex items-start gap-3 rounded-md px-2 py-2.5 transition-colors hover:bg-muted/50 cursor-pointer",
-        overdue && "bg-red-500/5",
-      )}
-      onClick={() => navigate(`/dev_tasks/${devTask.id}/show`)}
-    >
-      <Sparkles className="h-4 w-4 text-purple-500 mt-0.5 shrink-0" />
-      <div className="flex-1 min-w-0">
-        <p
-          className={cn("text-sm", overdue && "text-red-600 dark:text-red-400")}
+    <>
+      <li
+        className={cn(
+          "flex items-start gap-3 rounded-md px-2 py-2.5 transition-colors hover:bg-muted/50",
+          overdue && "bg-red-500/5",
+        )}
+      >
+        <Sparkles className="h-4 w-4 text-purple-500 mt-0.5 shrink-0" />
+        <div
+          className="flex-1 min-w-0 cursor-pointer"
+          onClick={() => navigate(`/dev_tasks/${devTask.id}/show`)}
         >
-          {devTask.title}
-        </p>
-        <div className="flex items-center gap-2 mt-0.5">
-          <span className={cn("text-xs", dateClass)}>{dateLabel}</span>
-          <span className="text-xs text-muted-foreground">·</span>
-          <span className="text-xs text-muted-foreground">Ticket dev</span>
+          <p
+            className={cn(
+              "text-sm",
+              overdue && "text-red-600 dark:text-red-400",
+            )}
+          >
+            {devTask.title}
+          </p>
+          <div className="flex items-center gap-2 mt-0.5">
+            <span className={cn("text-xs", dateClass)}>{dateLabel}</span>
+            <span className="text-xs text-muted-foreground">·</span>
+            <span className="text-xs text-muted-foreground">Ticket dev</span>
+          </div>
         </div>
-      </div>
-    </li>
+        <Button
+          size="sm"
+          variant="ghost"
+          className="h-7 text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-950"
+          onClick={(e) => {
+            e.stopPropagation();
+            setDoneOpen(true);
+          }}
+          title="Marquer comme fait"
+        >
+          <CheckCircle2 className="h-4 w-4" />
+        </Button>
+      </li>
+      {doneOpen && (
+        <MarkDoneDialog
+          open={doneOpen}
+          onOpenChange={setDoneOpen}
+          kind="devtask"
+          id={Number(devTask.id)}
+          title={devTask.title}
+          contactId={(devTask.contact_id as number | null) ?? null}
+        />
+      )}
+    </>
   );
 }
 
 function TaskRow({ task }: { task: Task }) {
-  const [update] = useUpdate();
+  const [doneOpen, setDoneOpen] = useState(false);
   const dueDate = new Date(task.due_date);
   const overdue = isPast(dueDate) && !isToday(dueDate);
   const today = isToday(dueDate);
   const tomorrow = isTomorrow(dueDate);
-
-  const handleToggle = () => {
-    update("tasks", {
-      id: task.id,
-      data: { done_date: new Date().toISOString() },
-      previousData: task,
-    });
-  };
 
   let dateLabel: string;
   let dateClass = "text-muted-foreground";
@@ -189,29 +211,54 @@ function TaskRow({ task }: { task: Task }) {
   const typeLabel = task.type && task.type !== "none" ? task.type : null;
 
   return (
-    <li
-      className={cn(
-        "flex items-start gap-3 rounded-md px-2 py-2.5 transition-colors hover:bg-muted/50",
-        overdue && "bg-red-500/5",
-      )}
-    >
-      <Checkbox className="mt-0.5 shrink-0" onCheckedChange={handleToggle} />
-      <div className="flex-1 min-w-0">
-        <p
-          className={cn("text-sm", overdue && "text-red-600 dark:text-red-400")}
-        >
-          {task.text}
-        </p>
-        <div className="flex items-center gap-2 mt-0.5">
-          <span className={cn("text-xs", dateClass)}>{dateLabel}</span>
-          {typeLabel && (
-            <>
-              <span className="text-xs text-muted-foreground">·</span>
-              <span className="text-xs text-muted-foreground">{typeLabel}</span>
-            </>
-          )}
+    <>
+      <li
+        className={cn(
+          "flex items-start gap-3 rounded-md px-2 py-2.5 transition-colors hover:bg-muted/50",
+          overdue && "bg-red-500/5",
+        )}
+      >
+        <div className="flex-1 min-w-0">
+          <p
+            className={cn(
+              "text-sm",
+              overdue && "text-red-600 dark:text-red-400",
+            )}
+          >
+            {task.text}
+          </p>
+          <div className="flex items-center gap-2 mt-0.5">
+            <span className={cn("text-xs", dateClass)}>{dateLabel}</span>
+            {typeLabel && (
+              <>
+                <span className="text-xs text-muted-foreground">·</span>
+                <span className="text-xs text-muted-foreground">
+                  {typeLabel}
+                </span>
+              </>
+            )}
+          </div>
         </div>
-      </div>
-    </li>
+        <Button
+          size="sm"
+          variant="ghost"
+          className="h-7 text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-950"
+          onClick={() => setDoneOpen(true)}
+          title="Marquer comme fait"
+        >
+          <CheckCircle2 className="h-4 w-4" />
+        </Button>
+      </li>
+      {doneOpen && (
+        <MarkDoneDialog
+          open={doneOpen}
+          onOpenChange={setDoneOpen}
+          kind="task"
+          id={Number(task.id)}
+          title={task.text ?? undefined}
+          contactId={(task.contact_id as number | null) ?? null}
+        />
+      )}
+    </>
   );
 }
