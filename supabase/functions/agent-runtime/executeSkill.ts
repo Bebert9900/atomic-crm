@@ -3,6 +3,17 @@ import { skills } from "../_shared/skills/index.ts";
 import type { SkillExecCtx } from "../_shared/skills/types.ts";
 import { appendTraceStep, createRun, finalizeRun } from "./runPersistence.ts";
 import { createSSEStream, sseResponse } from "./sse.ts";
+import { runToolLoop } from "../_shared/claude/toolLoop.ts";
+import {
+  checkGlobalUserLimits,
+  checkRateLimits,
+  checkTenantLimits,
+} from "../_shared/guardrails/rateLimit.ts";
+import {
+  checkKillSwitch,
+  isShadowEnforced,
+} from "../_shared/guardrails/killSwitch.ts";
+import { checkTenantAccess } from "../_shared/guardrails/tenantAccess.ts";
 
 export async function handleRun(
   req: Request,
@@ -14,7 +25,8 @@ export async function handleRun(
   } catch {
     return jsonError("invalid_body", 400);
   }
-  const { skill_id, input, dry_run = false } = body;
+  const { skill_id, input } = body;
+  let dry_run = body.dry_run ?? false;
   if (!skill_id || typeof skill_id !== "string") {
     return jsonError("missing_skill_id", 400);
   }
@@ -22,6 +34,66 @@ export async function handleRun(
   const manifest = skills[skill_id];
   if (!manifest) {
     return Response.json({ error: "unknown_skill", skill_id }, { status: 404 });
+  }
+
+  // Pre-flight guardrails
+  const kill = await checkKillSwitch(auth.token, manifest.id);
+  if (!kill.ok) {
+    return Response.json(
+      { error: "kill_switch", reason: kill.reason },
+      { status: 503 },
+    );
+  }
+  const tenantAcc = await checkTenantAccess(
+    auth.token,
+    manifest.id,
+    auth.tenantId,
+  );
+  if (!tenantAcc.ok) {
+    return Response.json(
+      { error: "not_enabled", reason: tenantAcc.reason },
+      { status: 403 },
+    );
+  }
+  const rl = await checkRateLimits(
+    auth.token,
+    auth.userId,
+    manifest.id,
+    manifest.rate_limit.per_minute,
+    manifest.rate_limit.per_hour,
+  );
+  if (!rl.ok) {
+    return Response.json(
+      { error: "rate_limit", reason: rl.reason, retryAfter: rl.retryAfter },
+      { status: 429 },
+    );
+  }
+  const globalRl = await checkGlobalUserLimits(auth.token, auth.userId);
+  if (!globalRl.ok) {
+    return Response.json(
+      {
+        error: "rate_limit",
+        reason: globalRl.reason,
+        retryAfter: globalRl.retryAfter,
+      },
+      { status: 429 },
+    );
+  }
+  const tenantRl = await checkTenantLimits(auth.token, auth.tenantId);
+  if (!tenantRl.ok) {
+    return Response.json(
+      {
+        error: "rate_limit",
+        reason: tenantRl.reason,
+        retryAfter: tenantRl.retryAfter,
+      },
+      { status: 429 },
+    );
+  }
+
+  // Shadow-mode enforcement: if skill is globally in shadow, override dry_run
+  if (!dry_run) {
+    dry_run = await isShadowEnforced(auth.token, manifest.id);
   }
 
   const parsed = manifest.input_schema.safeParse(input);
@@ -61,29 +133,45 @@ export async function handleRun(
   };
 
   (async () => {
-    send({ event: "run.started", data: { run_id: runId } });
+    send({ event: "run.started", data: { run_id: runId, dry_run } });
     try {
-      if (!manifest.execute) {
-        // A.2: only manifests with a custom executor can run.
-        // The Claude tool_use loop is wired in A.4.
-        throw new Error(
-          `Skill ${manifest.id} has no custom executor. The LLM runtime is not wired yet (story A.4).`,
-        );
+      if (manifest.execute) {
+        const output = await manifest.execute(execCtx);
+        const validated = manifest.output_schema.parse(output);
+        await finalizeRun(auth.token, runId, {
+          status: "success",
+          output: validated,
+        });
+        send({
+          event: "run.done",
+          data: { run_id: runId, output: validated },
+        });
+      } else {
+        const result = await runToolLoop(manifest, execCtx);
+        await finalizeRun(auth.token, runId, {
+          status: "success",
+          output: result.output,
+          input_tokens: result.usage.input_tokens,
+          output_tokens: result.usage.output_tokens,
+          cache_read_tokens: result.usage.cache_read_input_tokens,
+          cache_creation_tokens: result.usage.cache_creation_input_tokens,
+          cost_usd: result.usage.cost_usd,
+        });
+        send({
+          event: "run.done",
+          data: { run_id: runId, output: result.output, usage: result.usage },
+        });
       }
-      const output = await manifest.execute(execCtx);
-      const validated = manifest.output_schema.parse(output);
-      await finalizeRun(auth.token, runId, {
-        status: "success",
-        output: validated,
-      });
-      send({ event: "run.done", data: { run_id: runId, output: validated } });
     } catch (err) {
       await finalizeRun(auth.token, runId, {
         status: "error",
         error_code: "runtime_error",
         error_message: String(err),
       }).catch(() => {});
-      send({ event: "run.error", data: { run_id: runId, error: String(err) } });
+      send({
+        event: "run.error",
+        data: { run_id: runId, error: String(err) },
+      });
     } finally {
       close();
     }
