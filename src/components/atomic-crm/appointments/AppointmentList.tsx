@@ -148,7 +148,7 @@ export const AppointmentList = () => {
     const appointmentEvents = (appointments ?? [])
       .filter((a) => !hiddenSaleIds.has(Number(a.sales_id)))
       .map<CalendarEvent>((a) => ({
-        id: `appointment:${a.id}`,
+        id: `appointment_${a.id}`,
         title: a.title,
         start: appointmentDateTimeFromIso(a.start_at, timeZone),
         end: appointmentDateTimeFromIso(a.end_at, timeZone),
@@ -162,7 +162,7 @@ export const AppointmentList = () => {
         const start = appointmentDateTimeFromIso(t.due_date, timeZone);
         const end = start.add({ minutes: 30 });
         return {
-          id: `task:${t.id}`,
+          id: `task_${t.id}`,
           title: `📋 ${t.text ?? "Tâche"}`,
           start,
           end,
@@ -195,7 +195,7 @@ export const AppointmentList = () => {
         const end = start.add({ hours: 1 });
         return [
           {
-            id: `dev_task:${t.id}`,
+            id: `devtask_${t.id}`,
             title: `🛠 ${t.title}`,
             start,
             end,
@@ -324,15 +324,15 @@ export const AppointmentList = () => {
     callbacks: {
       onEventClick: (event) => {
         const id = String(event.id);
-        if (id.startsWith("appointment:")) {
-          setEditId(id.slice("appointment:".length));
+        if (id.startsWith("appointment_")) {
+          setEditId(id.slice("appointment_".length));
           return;
         }
-        if (id.startsWith("dev_task:")) {
-          navigate(`/dev_tasks/${id.slice("dev_task:".length)}/show`);
+        if (id.startsWith("devtask_")) {
+          navigate(`/dev_tasks/${id.slice("devtask_".length)}/show`);
           return;
         }
-        if (id.startsWith("task:")) {
+        if (id.startsWith("task_")) {
           navigate(`/tasks`);
           return;
         }
