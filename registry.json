@@ -626,6 +626,10 @@
           "type": "registry:component"
         },
         {
+          "path": "src/components/atomic-crm/emails/ComposeEmailDialog.tsx",
+          "type": "registry:component"
+        },
+        {
           "path": "src/components/atomic-crm/dev-tasks/statuses.ts",
           "type": "registry:component"
         },
