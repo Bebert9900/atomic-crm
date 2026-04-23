@@ -37,9 +37,25 @@ npx supabase migration up --local
 ### 2. Configurer la clé API Anthropic
 
 ```bash
+# Au moins une des deux clés (selon les skills que tu veux tester) :
 echo 'ANTHROPIC_API_KEY=sk-ant-...' >> supabase/functions/.env
-# ou mettre dans l'env du shell qui lance `supabase functions serve`
+echo 'DEEPSEEK_API_KEY=sk-...'      >> supabase/functions/.env
+# Optionnel, override base URL DeepSeek si proxy interne :
+# echo 'DEEPSEEK_BASE_URL=https://api.deepseek.com' >> supabase/functions/.env
 ```
+
+### Fournisseurs LLM supportés
+
+Le runtime route automatiquement selon le préfixe `model` du manifest :
+
+| Préfixe | Provider | Env var | Modèles testés |
+|---------|----------|---------|----------------|
+| `claude-*` | Anthropic | `ANTHROPIC_API_KEY` | `claude-opus-4-7`, `claude-sonnet-4-6`, `claude-haiku-4-5-20251001` |
+| `deepseek-*` | DeepSeek | `DEEPSEEK_API_KEY` | `deepseek-chat` (V3), `deepseek-reasoner` (R1) |
+
+Ajouter un provider : créer un fichier dans `supabase/functions/_shared/llm/` qui implémente `LLMProvider` (cf. `types.ts`), l'enregistrer dans `llm/registry.ts`.
+
+**Skill comparison** : `morning_brief` (Claude Sonnet) et `morning_brief_ds` (DeepSeek V3) ont le même contrat. Lance les deux en parallèle pour comparer coût/latence/qualité dans le dashboard.
 
 ### 3. Servir l'edge function
 

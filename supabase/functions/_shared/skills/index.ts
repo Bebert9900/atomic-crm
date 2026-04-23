@@ -3,6 +3,7 @@ import { helloWorldSkill } from "./helloWorld.ts";
 import { processCallRecordingSkill } from "./processCallRecording.ts";
 import { handleIncomingEmailSkill } from "./handleIncomingEmail.ts";
 import { morningBriefSkill } from "./morningBrief.ts";
+import { morningBriefDeepseekSkill } from "./morningBriefDeepseek.ts";
 import { nextBestActionOnDealSkill } from "./nextBestActionOnDeal.ts";
 import { qualifyInboundContactSkill } from "./qualifyInboundContact.ts";
 
@@ -13,6 +14,7 @@ export const skills: Record<string, SkillManifest<any, any>> = {
   [processCallRecordingSkill.id]: processCallRecordingSkill,
   [handleIncomingEmailSkill.id]: handleIncomingEmailSkill,
   [morningBriefSkill.id]: morningBriefSkill,
+  [morningBriefDeepseekSkill.id]: morningBriefDeepseekSkill,
   [nextBestActionOnDealSkill.id]: nextBestActionOnDealSkill,
   [qualifyInboundContactSkill.id]: qualifyInboundContactSkill,
 };

@@ -3,7 +3,7 @@ import { skills } from "../_shared/skills/index.ts";
 import type { SkillExecCtx } from "../_shared/skills/types.ts";
 import { appendTraceStep, createRun, finalizeRun } from "./runPersistence.ts";
 import { createSSEStream, sseResponse } from "./sse.ts";
-import { runToolLoop } from "../_shared/claude/toolLoop.ts";
+import { runToolLoop } from "../_shared/llm/toolLoop.ts";
 import {
   checkGlobalUserLimits,
   checkRateLimits,
