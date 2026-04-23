@@ -4,15 +4,14 @@ import {
   Building2,
   CalendarDays,
   CheckSquare,
+  Mail,
   Settings,
+  Sparkles,
+  Sun,
   Users,
 } from "lucide-react";
-import {
-  CanAccess,
-  useGetIdentity,
-  useGetList,
-  useTranslate,
-} from "ra-core";
+import { EmailAccountsPage } from "../settings/EmailAccountsPage";
+import { CanAccess, useGetIdentity, useGetList, useTranslate } from "ra-core";
 import { Link, matchPath, useLocation } from "react-router";
 import { cn } from "@/lib/utils";
 import { ThemeModeToggle } from "@/components/admin/theme-mode-toggle";
@@ -82,6 +81,18 @@ export const Sidebar = () => {
           isActive={currentPath === "/"}
         />
         <NavItem
+          to="/my-day"
+          icon={Sun}
+          label="Ma journée"
+          isActive={currentPath === "/my-day"}
+        />
+        <NavItem
+          to={EmailAccountsPage.path}
+          icon={Mail}
+          label="Mail"
+          isActive={currentPath === EmailAccountsPage.path}
+        />
+        <NavItem
           to="/tasks"
           icon={CheckSquare}
           label={translate("crm.sidebar.my_tasks", { _: "Mes tâches" })}
@@ -119,6 +130,15 @@ export const Sidebar = () => {
           label={translate("resources.companies.name", { smart_count: 2 })}
           isActive={currentPath === "/companies"}
           badge={totalCompanies}
+        />
+
+        {/* ÉQUIPE section */}
+        <SectionLabel className="mt-4">Équipe</SectionLabel>
+        <NavItem
+          to="/dev_tasks"
+          icon={Sparkles}
+          label="Dev"
+          isActive={currentPath === "/dev_tasks"}
         />
       </nav>
 
