@@ -42,6 +42,7 @@ import {
 } from "./CompanyAside";
 import { CompanyAvatar } from "./CompanyAvatar";
 import { CompanyPayments } from "./CompanyPayments";
+import { CompanyRecordingsList } from "./CompanyRecordingsList";
 
 export const CompanyShow = () => {
   const isMobile = useIsMobile();
@@ -137,7 +138,7 @@ const CompanyShowContent = () => {
             <CardContent className="py-5">
               <Tabs defaultValue={currentTab} onValueChange={handleTabChange}>
                 <TabsList
-                  className={`grid w-full ${record.nb_deals ? "grid-cols-4" : "grid-cols-3"}`}
+                  className={`grid w-full ${record.nb_deals ? "grid-cols-5" : "grid-cols-4"}`}
                 >
                   <TabsTrigger value="activity">
                     {translate("crm.common.activity")}
@@ -157,6 +158,7 @@ const CompanyShowContent = () => {
                     </TabsTrigger>
                   ) : null}
                   <TabsTrigger value="payments">Paiements</TabsTrigger>
+                  <TabsTrigger value="recordings">Enregistrements</TabsTrigger>
                 </TabsList>
                 <TabsContent value="activity" className="pt-4">
                   <ActivityLog companyId={record.id} context="company" />
@@ -198,6 +200,9 @@ const CompanyShowContent = () => {
                       <DealsIterator />
                     </ReferenceManyField>
                   ) : null}
+                </TabsContent>
+                <TabsContent value="recordings" className="pt-4">
+                  <CompanyRecordingsList companyId={Number(record.id)} />
                 </TabsContent>
                 <TabsContent value="payments" className="pt-4">
                   <CompanyPayments companyId={Number(record.id)} />

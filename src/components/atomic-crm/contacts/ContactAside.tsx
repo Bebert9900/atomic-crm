@@ -6,6 +6,7 @@ import { ShowButton } from "@/components/admin/show-button";
 
 import { AddAppointment } from "../appointments/AddAppointment";
 import { ContactAppointmentsList } from "../appointments/ContactAppointmentsList";
+import { ContactPlansList } from "../plans/ContactPlansList";
 import { ContactRecordingsList } from "../recordings/ContactRecordingsList";
 import { RecordButton } from "../recordings/RecordButton";
 import { AddTask } from "../tasks/AddTask";
@@ -75,6 +76,10 @@ export const ContactAside = ({ link = "edit" }: { link?: "edit" | "show" }) => {
       <AsideSection title="Rendez-vous">
         <ContactAppointmentsList contactId={record.id} />
         <AddAppointment />
+      </AsideSection>
+
+      <AsideSection title={translate("resources.contact_plans.name")}>
+        <ContactPlansList contactId={record.id} />
       </AsideSection>
 
       <AsideSection title="Enregistrements">

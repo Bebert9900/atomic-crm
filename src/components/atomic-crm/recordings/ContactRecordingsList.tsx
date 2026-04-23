@@ -1,7 +1,14 @@
-import { useGetList } from "ra-core";
-import { Loader2, FileAudio, ChevronDown, ChevronUp } from "lucide-react";
+import { useDelete, useGetList, useNotify, useRefresh } from "ra-core";
+import {
+  Loader2,
+  FileAudio,
+  ChevronDown,
+  ChevronUp,
+  Trash2,
+} from "lucide-react";
 import { useState, useEffect, useCallback } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 
 import type { ContactRecording } from "../types";
 import { getSupabaseClient } from "../providers/supabase/supabase";
@@ -23,9 +30,18 @@ function formatDate(dateStr: string): string {
   });
 }
 
-function RecordingItem({ recording }: { recording: ContactRecording }) {
+export function RecordingItem({
+  recording,
+  contactName,
+}: {
+  recording: ContactRecording;
+  contactName?: string;
+}) {
   const [audioUrl, setAudioUrl] = useState<string | null>(null);
   const [expanded, setExpanded] = useState(false);
+  const [deleteOne, { isPending: isDeleting }] = useDelete();
+  const notify = useNotify();
+  const refresh = useRefresh();
 
   const loadAudio = useCallback(async () => {
     if (audioUrl) return;
@@ -43,15 +59,49 @@ function RecordingItem({ recording }: { recording: ContactRecording }) {
     }
   }, [expanded, audioUrl, loadAudio]);
 
+  const handleDelete = useCallback(async () => {
+    if (
+      !window.confirm(
+        "Supprimer cet enregistrement ? L'audio et la transcription seront définitivement supprimés.",
+      )
+    ) {
+      return;
+    }
+    try {
+      await getSupabaseClient()
+        .storage.from(ATTACHMENTS_BUCKET)
+        .remove([recording.storage_path]);
+    } catch {
+      // Storage may already be gone — still try to remove the DB row.
+    }
+    deleteOne(
+      "contact_recordings",
+      { id: recording.id },
+      {
+        onSuccess: () => {
+          notify("Enregistrement supprimé", { type: "success" });
+          refresh();
+        },
+        onError: () => {
+          notify("Suppression impossible", { type: "error" });
+        },
+      },
+    );
+  }, [deleteOne, recording.id, recording.storage_path, notify, refresh]);
+
   return (
     <div className="border rounded-lg p-3">
-      <div
-        className="flex items-center gap-3 cursor-pointer"
-        onClick={() => setExpanded(!expanded)}
-      >
-        <FileAudio className="h-4 w-4 text-muted-foreground shrink-0" />
-        <div className="flex-1 min-w-0">
+      <div className="flex items-center gap-3">
+        <FileAudio
+          className="h-4 w-4 text-muted-foreground shrink-0 cursor-pointer"
+          onClick={() => setExpanded(!expanded)}
+        />
+        <div
+          className="flex-1 min-w-0 cursor-pointer"
+          onClick={() => setExpanded(!expanded)}
+        >
           <div className="text-sm font-medium">
+            {contactName ? `${contactName} · ` : ""}
             {formatDate(recording.created_at)}
           </div>
           <div className="text-xs text-muted-foreground">
@@ -70,11 +120,23 @@ function RecordingItem({ recording }: { recording: ContactRecording }) {
             )}
           </div>
         </div>
-        {expanded ? (
-          <ChevronUp className="h-4 w-4" />
-        ) : (
-          <ChevronDown className="h-4 w-4" />
-        )}
+        <Button
+          variant="ghost"
+          size="icon"
+          className="h-7 w-7 text-muted-foreground hover:text-red-500"
+          aria-label="Supprimer l'enregistrement"
+          onClick={handleDelete}
+          disabled={isDeleting}
+        >
+          <Trash2 className="h-3.5 w-3.5" />
+        </Button>
+        <div className="cursor-pointer" onClick={() => setExpanded(!expanded)}>
+          {expanded ? (
+            <ChevronUp className="h-4 w-4" />
+          ) : (
+            <ChevronDown className="h-4 w-4" />
+          )}
+        </div>
       </div>
 
       {expanded && (
