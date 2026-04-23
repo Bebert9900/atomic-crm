@@ -55,13 +55,14 @@ const DevTaskShowContent = () => {
     { pagination: { page: 1, perPage: 100 } },
     { enabled: !!record?.label_ids?.length },
   );
+  const assigneeIds = (record?.assignee_ids ?? []) as number[];
   const { data: assignees } = useGetList<Sale>(
     "sales",
     {
-      filter: { id: record?.assignee_id },
-      pagination: { page: 1, perPage: 1 },
+      filter: { "id@in": `(${assigneeIds.join(",") || 0})` },
+      pagination: { page: 1, perPage: 20 },
     },
-    { enabled: !!record?.assignee_id },
+    { enabled: assigneeIds.length > 0 },
   );
 
   if (!record) return null;
@@ -69,7 +70,7 @@ const DevTaskShowContent = () => {
   const labels = (allLabels ?? []).filter((l) =>
     (record.label_ids ?? []).includes(l.id),
   );
-  const assignee = assignees?.[0];
+  const resolvedAssignees = assignees ?? [];
 
   return (
     <div className="space-y-2">
@@ -111,19 +112,26 @@ const DevTaskShowContent = () => {
             {new Date(record.due_date).toLocaleDateString("fr-FR")}
           </Meta>
         )}
-        {assignee && (
-          <Meta label="Assigné à">
-            <span className="inline-flex items-center gap-2">
-              <Avatar className="w-5 h-5">
-                {assignee.avatar?.src && (
-                  <AvatarImage src={assignee.avatar.src} />
-                )}
-                <AvatarFallback className="text-[10px]">
-                  {initialsOf(assignee)}
-                </AvatarFallback>
-              </Avatar>
-              {assignee.first_name} {assignee.last_name}
-            </span>
+        {resolvedAssignees.length > 0 && (
+          <Meta label={`Assigné à (${resolvedAssignees.length})`}>
+            <div className="flex flex-wrap gap-2">
+              {resolvedAssignees.map((a) => (
+                <span
+                  key={a.id}
+                  className="inline-flex items-center gap-2 rounded-full bg-muted px-2 py-0.5"
+                >
+                  <Avatar className="w-5 h-5">
+                    {a.avatar?.src && <AvatarImage src={a.avatar.src} />}
+                    <AvatarFallback className="text-[10px]">
+                      {initialsOf(a)}
+                    </AvatarFallback>
+                  </Avatar>
+                  <span className="text-sm">
+                    {a.first_name} {a.last_name}
+                  </span>
+                </span>
+              ))}
+            </div>
           </Meta>
         )}
       </div>

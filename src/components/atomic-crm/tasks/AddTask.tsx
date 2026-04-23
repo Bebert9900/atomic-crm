@@ -27,6 +27,8 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 
+import { useQueryClient } from "@tanstack/react-query";
+
 import { TaskFormContent } from "./TaskFormContent";
 
 export const AddTask = ({
@@ -42,6 +44,7 @@ export const AddTask = ({
   const notify = useNotify();
   const translate = useTranslate();
   const contact = useRecordContext();
+  const queryClient = useQueryClient();
   const [open, setOpen] = useState(false);
   const handleOpen = () => {
     setOpen(true);
@@ -50,17 +53,22 @@ export const AddTask = ({
 
   const handleSuccess = async (data: any) => {
     setOpen(false);
-    const contact = await dataProvider.getOne("contacts", {
-      id: data.contact_id,
-    });
-    if (!contact.data) return;
-
-    await update("contacts", {
-      id: contact.data.id,
-      data: { last_seen: new Date().toISOString() },
-      previousData: contact.data,
-    });
-
+    if (data.contact_id) {
+      const contact = await dataProvider.getOne("contacts", {
+        id: data.contact_id,
+      });
+      if (contact.data) {
+        await update("contacts", {
+          id: contact.data.id,
+          data: { last_seen: new Date().toISOString() },
+          previousData: contact.data,
+        });
+      }
+    }
+    // Invalidate every view that lists or counts tasks so they refresh.
+    queryClient.invalidateQueries({ queryKey: ["tasks"] });
+    queryClient.invalidateQueries({ queryKey: ["contacts_summary"] });
+    queryClient.invalidateQueries({ queryKey: ["contacts"] });
     notify("resources.tasks.added");
   };
 

@@ -53,9 +53,10 @@ export const TaskCreateSheet = ({
       data: { last_seen: new Date().toISOString() },
       previousData: contact,
     });
-    queryClient.invalidateQueries({
-      queryKey: ["contacts", "getOne"],
-    });
+    queryClient.invalidateQueries({ queryKey: ["contacts", "getOne"] });
+    queryClient.invalidateQueries({ queryKey: ["tasks"] });
+    queryClient.invalidateQueries({ queryKey: ["contacts_summary"] });
+    queryClient.invalidateQueries({ queryKey: ["contacts"] });
 
     notify("resources.tasks.added");
     // No redirect, only close the sheet

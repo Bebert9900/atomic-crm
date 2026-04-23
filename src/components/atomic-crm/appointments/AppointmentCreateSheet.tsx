@@ -1,4 +1,5 @@
 import { type Identifier, useGetIdentity, useNotify } from "ra-core";
+import { useQueryClient } from "@tanstack/react-query";
 import { CreateSheet } from "../misc/CreateSheet";
 import { AppointmentInputs } from "./AppointmentInputs";
 
@@ -21,6 +22,7 @@ export const AppointmentCreateSheet = ({
 }: AppointmentCreateSheetProps) => {
   const { identity } = useGetIdentity();
   const notify = useNotify();
+  const queryClient = useQueryClient();
 
   if (!identity) return null;
 
@@ -28,6 +30,9 @@ export const AppointmentCreateSheet = ({
   const oneHourLater = new Date(now.getTime() + 60 * 60 * 1000);
 
   const handleSuccess = () => {
+    queryClient.invalidateQueries({ queryKey: ["appointments"] });
+    queryClient.invalidateQueries({ queryKey: ["contacts"] });
+    queryClient.invalidateQueries({ queryKey: ["contacts_summary"] });
     notify("Rendez-vous créé", { type: "success" });
     onOpenChange(false);
   };

@@ -63,15 +63,16 @@ export const DevTaskCardContent = ({
   );
   const labels = (allLabels ?? []).filter((l) => labelIds.includes(l.id));
 
+  const assigneeIds = (task.assignee_ids ?? []) as number[];
   const { data: assignees } = useGetList<Sale>(
     "sales",
     {
-      filter: { id: task.assignee_id },
-      pagination: { page: 1, perPage: 1 },
+      filter: { "id@in": `(${assigneeIds.join(",") || 0})` },
+      pagination: { page: 1, perPage: 20 },
     },
-    { enabled: !!task.assignee_id },
+    { enabled: assigneeIds.length > 0 },
   );
-  const assignee = assignees?.[0];
+  const resolvedAssignees = assignees ?? [];
 
   const handleClick = () => {
     redirect(`/dev_tasks/${task.id}/show`, undefined, undefined, undefined, {
@@ -116,7 +117,7 @@ export const DevTaskCardContent = ({
             ) : null}
           </div>
           <p className="text-sm font-medium line-clamp-2">{task.title}</p>
-          {(visibleLabels.length > 0 || assignee) && (
+          {(visibleLabels.length > 0 || resolvedAssignees.length > 0) && (
             <div className="flex items-center justify-between gap-2 mt-1">
               <div className="flex items-center gap-1 flex-wrap">
                 {visibleLabels.map((label) => (
@@ -128,15 +129,25 @@ export const DevTaskCardContent = ({
                   </span>
                 )}
               </div>
-              {assignee && (
-                <Avatar className="w-5 h-5 shrink-0">
-                  {assignee.avatar?.src && (
-                    <AvatarImage src={assignee.avatar.src} />
+              {resolvedAssignees.length > 0 && (
+                <div className="flex -space-x-1.5 shrink-0">
+                  {resolvedAssignees.slice(0, 3).map((a) => (
+                    <Avatar
+                      key={a.id}
+                      className="w-5 h-5 border border-background"
+                    >
+                      {a.avatar?.src && <AvatarImage src={a.avatar.src} />}
+                      <AvatarFallback className="text-[10px]">
+                        {initialsOf(a)}
+                      </AvatarFallback>
+                    </Avatar>
+                  ))}
+                  {resolvedAssignees.length > 3 && (
+                    <span className="text-[10px] text-muted-foreground ml-1">
+                      +{resolvedAssignees.length - 3}
+                    </span>
                   )}
-                  <AvatarFallback className="text-[10px]">
-                    {initialsOf(assignee)}
-                  </AvatarFallback>
-                </Avatar>
+                </div>
               )}
             </div>
           )}

@@ -57,6 +57,7 @@ export const DevTaskCreate = ({ open }: { open: boolean }) => {
       },
       { updatedAt: Date.now() },
     );
+    queryClient.invalidateQueries({ queryKey: ["dev_tasks"] });
     redirect("/dev_tasks");
   };
 
@@ -70,6 +71,7 @@ export const DevTaskCreate = ({ open }: { open: boolean }) => {
               priority: "none",
               index: 0,
               label_ids: [],
+              assignee_ids: [],
             }}
           >
             <DevTaskInputs />

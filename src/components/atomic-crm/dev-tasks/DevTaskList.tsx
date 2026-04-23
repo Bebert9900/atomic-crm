@@ -37,10 +37,14 @@ const DevTaskList = () => {
       optionText="label"
       optionValue="value"
     />,
-    <ReferenceInput source="assignee_id" reference="sales">
+    <ReferenceInput source="assignee_ids@cs" reference="sales">
       <AutocompleteInput
         optionText={(s) => `${s.first_name} ${s.last_name}`}
         label="Assigné à"
+        parse={(v) => (v == null ? v : `{${v}}`)}
+        format={(v) =>
+          typeof v === "string" ? Number(v.replace(/[{}]/g, "")) : v
+        }
       />
     </ReferenceInput>,
   ];

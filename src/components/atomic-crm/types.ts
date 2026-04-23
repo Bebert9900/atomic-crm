@@ -360,6 +360,7 @@ export type DevTask = {
   priority: string;
   index: number;
   assignee_id: Identifier | null;
+  assignee_ids: Identifier[];
   due_date: string | null;
   label_ids: Identifier[];
   contact_id: Identifier | null;

@@ -60,13 +60,13 @@ const DevTaskMetaInputs = () => {
         defaultValue="none"
         helperText={false}
       />
-      <ReferenceInput source="assignee_id" reference="sales">
-        <AutocompleteInput
+      <ReferenceArrayInput source="assignee_ids" reference="sales">
+        <AutocompleteArrayInput
           optionText={(s) => `${s.first_name} ${s.last_name}`}
           label="Assigné à"
           helperText={false}
         />
-      </ReferenceInput>
+      </ReferenceArrayInput>
       <DateInput source="due_date" helperText={false} />
       <ReferenceArrayInput source="label_ids" reference="dev_task_labels">
         <AutocompleteArrayInput
