@@ -8,6 +8,7 @@ import { AddAppointment } from "../appointments/AddAppointment";
 import { ContactAppointmentsList } from "../appointments/ContactAppointmentsList";
 import { ContactPlansList } from "../plans/ContactPlansList";
 import { ContactRecordingsList } from "../recordings/ContactRecordingsList";
+import { RecordButton } from "../recordings/RecordButton";
 import { AddTask } from "../tasks/AddTask";
 import { TasksIterator } from "../tasks/TasksIterator";
 import { TagsListEdit } from "./TagsListEdit";
@@ -81,7 +82,15 @@ export const ContactAside = ({ link = "edit" }: { link?: "edit" | "show" }) => {
         <ContactPlansList contactId={record.id} />
       </AsideSection>
 
-      <ContactRecordingsList contactId={record.id as number} />
+      <AsideSection title="Enregistrements">
+        <ContactRecordingsList contactId={record.id as number} />
+        <div className="mt-2">
+          <RecordButton
+            contactId={record.id as number}
+            contactName={`${record.first_name ?? ""} ${record.last_name ?? ""}`.trim()}
+          />
+        </div>
+      </AsideSection>
 
       <div className="my-4">
         <SendEmailButton />
