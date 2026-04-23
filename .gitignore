@@ -54,3 +54,4 @@ scripts/email-sync.env
 
 # Signing keys — NEVER commit private keys
 supabase/signing_keys.json
+dist.backup-*

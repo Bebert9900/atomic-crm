@@ -8,6 +8,7 @@ import { TodayTasks } from "./TodayTasks";
 import { PipelinePulse } from "./PipelinePulse";
 import { TodayAgenda } from "./TodayAgenda";
 import { DashboardActivityLog } from "./DashboardActivityLog";
+import { UnreadEmailsList } from "./UnreadEmailsList";
 
 export const Dashboard = () => {
   const { identity } = useGetIdentity();
@@ -66,6 +67,7 @@ export const Dashboard = () => {
 
         {/* Right column (5 cols) */}
         <div className="lg:col-span-5 flex flex-col gap-6">
+          <UnreadEmailsList />
           <PipelinePulse />
           <TodayAgenda />
           <DashboardActivityLog />

@@ -41,6 +41,7 @@ import {
   ContextInfo,
 } from "./CompanyAside";
 import { CompanyAvatar } from "./CompanyAvatar";
+import { CompanyPayments } from "./CompanyPayments";
 
 export const CompanyShow = () => {
   const isMobile = useIsMobile();
@@ -134,11 +135,10 @@ const CompanyShowContent = () => {
         <div className="flex-1 min-w-0">
           <Card>
             <CardContent className="py-5">
-              <Tabs
-                defaultValue={currentTab}
-                onValueChange={handleTabChange}
-              >
-                <TabsList className="grid w-full grid-cols-3">
+              <Tabs defaultValue={currentTab} onValueChange={handleTabChange}>
+                <TabsList
+                  className={`grid w-full ${record.nb_deals ? "grid-cols-4" : "grid-cols-3"}`}
+                >
                   <TabsTrigger value="activity">
                     {translate("crm.common.activity")}
                   </TabsTrigger>
@@ -156,6 +156,7 @@ const CompanyShowContent = () => {
                       })}
                     </TabsTrigger>
                   ) : null}
+                  <TabsTrigger value="payments">Paiements</TabsTrigger>
                 </TabsList>
                 <TabsContent value="activity" className="pt-4">
                   <ActivityLog companyId={record.id} context="company" />
@@ -171,11 +172,7 @@ const CompanyShowContent = () => {
                         <div className="flex flex-row justify-end space-x-2">
                           {!!record.nb_contacts && (
                             <SortButton
-                              fields={[
-                                "last_name",
-                                "first_name",
-                                "last_seen",
-                              ]}
+                              fields={["last_name", "first_name", "last_seen"]}
                             />
                           )}
                           <CreateRelatedContactButton />
@@ -201,6 +198,9 @@ const CompanyShowContent = () => {
                       <DealsIterator />
                     </ReferenceManyField>
                   ) : null}
+                </TabsContent>
+                <TabsContent value="payments" className="pt-4">
+                  <CompanyPayments companyId={Number(record.id)} />
                 </TabsContent>
               </Tabs>
             </CardContent>

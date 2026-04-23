@@ -170,6 +170,10 @@
           "type": "registry:component"
         },
         {
+          "path": "src/components/atomic-crm/sales/taskProductivity.ts",
+          "type": "registry:component"
+        },
+        {
           "path": "src/components/atomic-crm/sales/index.ts",
           "type": "registry:component"
         },
@@ -191,6 +195,10 @@
         },
         {
           "path": "src/components/atomic-crm/root/useConfigurationLoader.ts",
+          "type": "registry:component"
+        },
+        {
+          "path": "src/components/atomic-crm/root/defaultDevTasksConfig.ts",
           "type": "registry:component"
         },
         {
@@ -303,6 +311,10 @@
         },
         {
           "path": "src/components/atomic-crm/providers/fakerest/dataGenerator/finalize.ts",
+          "type": "registry:component"
+        },
+        {
+          "path": "src/components/atomic-crm/providers/fakerest/dataGenerator/devTasks.ts",
           "type": "registry:component"
         },
         {
@@ -582,6 +594,14 @@
           "type": "registry:component"
         },
         {
+          "path": "src/components/atomic-crm/layout/FabrikTopBar.tsx",
+          "type": "registry:component"
+        },
+        {
+          "path": "src/components/atomic-crm/layout/FabrikSidebar.tsx",
+          "type": "registry:component"
+        },
+        {
           "path": "src/components/atomic-crm/layout/CreateDropdown.tsx",
           "type": "registry:component"
         },
@@ -595,6 +615,62 @@
         },
         {
           "path": "src/components/atomic-crm/emails/EmailComposeSheet.tsx",
+          "type": "registry:component"
+        },
+        {
+          "path": "src/components/atomic-crm/dev-tasks/statuses.ts",
+          "type": "registry:component"
+        },
+        {
+          "path": "src/components/atomic-crm/dev-tasks/index.ts",
+          "type": "registry:component"
+        },
+        {
+          "path": "src/components/atomic-crm/dev-tasks/devTaskUtils.ts",
+          "type": "registry:component"
+        },
+        {
+          "path": "src/components/atomic-crm/dev-tasks/PriorityIcon.tsx",
+          "type": "registry:component"
+        },
+        {
+          "path": "src/components/atomic-crm/dev-tasks/LabelPill.tsx",
+          "type": "registry:component"
+        },
+        {
+          "path": "src/components/atomic-crm/dev-tasks/DevTaskShow.tsx",
+          "type": "registry:component"
+        },
+        {
+          "path": "src/components/atomic-crm/dev-tasks/DevTaskListContent.tsx",
+          "type": "registry:component"
+        },
+        {
+          "path": "src/components/atomic-crm/dev-tasks/DevTaskList.tsx",
+          "type": "registry:component"
+        },
+        {
+          "path": "src/components/atomic-crm/dev-tasks/DevTaskInputs.tsx",
+          "type": "registry:component"
+        },
+        {
+          "path": "src/components/atomic-crm/dev-tasks/DevTaskEmpty.tsx",
+          "type": "registry:component"
+        },
+        {
+          "path": "src/components/atomic-crm/dev-tasks/DevTaskEdit.tsx",
+          "type": "registry:component"
+        },
+        {
+          "path": "src/components/atomic-crm/dev-tasks/DevTaskCreate.tsx",
+          "type": "registry:component"
+        },
+        {
+          "path": "src/components/atomic-crm/dev-tasks/DevTaskColumn.tsx",
+          "type": "registry:component"
+        },
+        {
+          "path": "src/components/atomic-crm/dev-tasks/DevTaskCard.tsx",
           "type": "registry:component"
         },
         {
@@ -679,6 +755,10 @@
         },
         {
           "path": "src/components/atomic-crm/dashboard/PipelinePulse.tsx",
+          "type": "registry:component"
+        },
+        {
+          "path": "src/components/atomic-crm/dashboard/MyDayPage.tsx",
           "type": "registry:component"
         },
         {
@@ -835,6 +915,14 @@
         },
         {
           "path": "src/components/atomic-crm/companies/CompanyShow.tsx",
+          "type": "registry:component"
+        },
+        {
+          "path": "src/components/atomic-crm/companies/CompanyQuickCreateDialog.tsx",
+          "type": "registry:component"
+        },
+        {
+          "path": "src/components/atomic-crm/companies/CompanyPayments.tsx",
           "type": "registry:component"
         },
         {
