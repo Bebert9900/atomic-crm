@@ -368,8 +368,60 @@ export const AppointmentList = () => {
     setCreateOpen(true);
   };
 
+  const toggleSale = (id: number) => {
+    setHiddenSaleIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  };
+
   return (
-    <div className="flex flex-col gap-0">
+    <div className="flex flex-col gap-3">
+      <Card className="p-3">
+        <div className="flex items-center gap-2 flex-wrap">
+          <span className="text-xs text-muted-foreground mr-1">Équipe :</span>
+          {(sales ?? []).map((s) => {
+            const c = colorForSaleId(s.id);
+            const hidden = hiddenSaleIds.has(Number(s.id));
+            return (
+              <Button
+                key={s.id}
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => toggleSale(Number(s.id))}
+                className={cn(
+                  "h-7 px-2 text-xs gap-1.5 border",
+                  hidden && "opacity-40",
+                )}
+                style={{
+                  borderColor: c.main,
+                  color: hidden ? undefined : c.main,
+                }}
+              >
+                <span
+                  className="inline-block w-2.5 h-2.5 rounded-full"
+                  style={{ backgroundColor: c.main }}
+                />
+                {s.first_name} {s.last_name}
+              </Button>
+            );
+          })}
+          {hiddenSaleIds.size > 0 && (
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              className="h-7 px-2 text-xs"
+              onClick={() => setHiddenSaleIds(new Set())}
+            >
+              Tout afficher
+            </Button>
+          )}
+        </div>
+      </Card>
       <div
         className={cn(
           "calendar-wrapper rounded-lg border border-border bg-card overflow-hidden",
