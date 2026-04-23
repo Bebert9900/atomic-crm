@@ -70,7 +70,24 @@ export function RecordingItem({
         { method: "POST", body: { recording_id: recording.id } },
       );
       if (error) {
-        notify(`Transcription échouée: ${error.message}`, { type: "error" });
+        let detail = error.message;
+        try {
+          const ctx = (error as { context?: Response }).context;
+          if (ctx && typeof ctx.text === "function") {
+            const body = await ctx.clone().text();
+            if (body) {
+              try {
+                const parsed = JSON.parse(body);
+                detail = parsed.message ?? body;
+              } catch {
+                detail = body;
+              }
+            }
+          }
+        } catch {
+          /* ignore */
+        }
+        notify(`Transcription échouée: ${detail}`, { type: "error" });
       } else {
         notify("Transcription relancée", { type: "success" });
       }
