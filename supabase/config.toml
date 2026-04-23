@@ -172,3 +172,7 @@ verify_jwt = false
 verify_jwt = false
 [functions.mcp]
 verify_jwt = false
+[functions.sync_saas_plan]
+verify_jwt = false
+[functions.sync_saas_user]
+verify_jwt = false

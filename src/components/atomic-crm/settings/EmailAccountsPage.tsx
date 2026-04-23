@@ -111,8 +111,11 @@ export const EmailAccountsPage = () => {
         <div>
           <h1 className="text-2xl font-semibold">Comptes email</h1>
           <p className="text-sm text-muted-foreground mt-1">
-            Configurez les boîtes IMAP/SMTP synchronisées par le CRM. Le mot de
-            passe est chiffré avant d'être stocké.
+            Boîtes IMAP/SMTP synchronisées par le CRM. Le mot de passe est
+            chiffré avant d'être stocké.
+            {!isAdmin
+              ? " Seul un administrateur peut modifier la configuration."
+              : ""}
           </p>
         </div>
         {isAdmin ? (
@@ -122,13 +125,7 @@ export const EmailAccountsPage = () => {
         ) : null}
       </div>
 
-      {!isAdmin ? (
-        <Card>
-          <CardContent className="p-6 text-sm text-muted-foreground">
-            Seuls les administrateurs peuvent gérer les comptes email.
-          </CardContent>
-        </Card>
-      ) : isPending ? (
+      {isPending ? (
         <p className="text-sm text-muted-foreground">Chargement…</p>
       ) : !accounts || accounts.length === 0 ? (
         <Card>
@@ -160,22 +157,26 @@ export const EmailAccountsPage = () => {
                       {!acc.is_active ? " · désactivé" : ""}
                     </p>
                   </div>
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="icon"
-                    onClick={() => openEdit(acc)}
-                  >
-                    <Pencil className="w-4 h-4" />
-                  </Button>
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="icon"
-                    onClick={() => handleDelete(acc)}
-                  >
-                    <Trash2 className="w-4 h-4 text-destructive" />
-                  </Button>
+                  {isAdmin && (
+                    <>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => openEdit(acc)}
+                      >
+                        <Pencil className="w-4 h-4" />
+                      </Button>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => handleDelete(acc)}
+                      >
+                        <Trash2 className="w-4 h-4 text-destructive" />
+                      </Button>
+                    </>
+                  )}
                 </div>
               );
             })}

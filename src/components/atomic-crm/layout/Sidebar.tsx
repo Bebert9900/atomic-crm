@@ -9,6 +9,7 @@ import {
   Sparkles,
   Sun,
   Users,
+  Zap,
 } from "lucide-react";
 import { EmailAccountsPage } from "../settings/EmailAccountsPage";
 import { CanAccess, useGetIdentity, useGetList, useTranslate } from "ra-core";
