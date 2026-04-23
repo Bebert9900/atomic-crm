@@ -284,6 +284,11 @@ export type ContactRecording = {
   summary: string | null;
   email_advice: string | null;
   sms_advice: string | null;
+  email_draft: string | null;
+  sms_draft: string | null;
+  sentiment: string | null;
+  warmth_score: number | null;
+  warmth_label: string | null;
   created_at: string;
   sales_id: Identifier;
 } & Pick<RaRecord, "id">;

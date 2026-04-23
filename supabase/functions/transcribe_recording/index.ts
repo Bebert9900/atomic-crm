@@ -88,6 +88,11 @@ async function handler(req: Request): Promise<Response> {
     let summary = "";
     let email_advice = "";
     let sms_advice = "";
+    let email_draft = "";
+    let sms_draft = "";
+    let sentiment = "";
+    let warmth_score: number | null = null;
+    let warmth_label = "";
 
     if (transcription) {
       const summaryResponse = await fetch(
@@ -106,12 +111,23 @@ async function handler(req: Request): Promise<Response> {
 ${transcription}
 ---
 
-Réponds STRICTEMENT en JSON valide avec cette structure exacte (sans markdown, sans backticks):
+Réponds STRICTEMENT en JSON valide (sans markdown, sans backticks) avec CETTE structure EXACTE:
 {
-  "summary": "Un résumé concis de l'appel en 3-5 phrases (points clés, besoins du prospect, objections, prochaines étapes)",
-  "email_advice": "Un conseil détaillé pour rédiger un email de suivi (ton, contenu à inclure, accroche suggérée, call-to-action)",
-  "sms_advice": "Un conseil détaillé pour rédiger un SMS de suivi (court, percutant, exemple de message)"
+  "summary": "Résumé concis en 3-5 phrases (points clés, besoins du prospect, objections, prochaines étapes)",
+  "sentiment": "Un des 5 mots: Positif, Neutre, Hésitant, Négatif, Froid",
+  "warmth_score": 55,
+  "warmth_label": "Un des 5 niveaux: Glacé, Froid, Tiède, Chaud, Brûlant",
+  "email_advice": "Conseils sur le ton et la structure de l'email de suivi (2-3 phrases)",
+  "sms_advice": "Conseils sur l'angle du SMS de suivi (1-2 phrases)",
+  "email_draft": "Email de suivi clé-en-main, prêt à envoyer, avec objet et corps. Format: Objet: ...\\n\\nBonjour [Prénom],\\n\\n[corps]\\n\\nCordialement,",
+  "sms_draft": "SMS de suivi clé-en-main, max 160 caractères, prêt à envoyer"
 }
+
+Règles:
+- warmth_score: entier 0-100 (0=totalement désintéressé, 100=prêt à signer).
+- Le sentiment reflète l'attitude du prospect pendant l'appel.
+- Les drafts (email_draft, sms_draft) doivent être rédigés au nom du commercial, pas des conseils.
+- Si la transcription est trop courte ou vide, retourne des chaînes vides mais garde la structure.
 
 Réponds uniquement avec le JSON, rien d'autre.`,
                   },
@@ -136,6 +152,14 @@ Réponds uniquement avec le JSON, rien d'autre.`,
           summary = parsed.summary ?? "";
           email_advice = parsed.email_advice ?? "";
           sms_advice = parsed.sms_advice ?? "";
+          email_draft = parsed.email_draft ?? "";
+          sms_draft = parsed.sms_draft ?? "";
+          sentiment = parsed.sentiment ?? "";
+          warmth_label = parsed.warmth_label ?? "";
+          const rawScore = Number(parsed.warmth_score);
+          warmth_score = Number.isFinite(rawScore)
+            ? Math.max(0, Math.min(100, Math.round(rawScore)))
+            : null;
         } catch (e) {
           console.error("Failed to parse summary JSON:", text, e);
           summary = text;
@@ -148,7 +172,7 @@ Réponds uniquement avec le JSON, rien d'autre.`,
       }
     }
 
-    // Save transcription + summary + advice
+    // Save transcription + summary + advice + sentiment + drafts
     await supabaseAdmin
       .from("contact_recordings")
       .update({
@@ -157,6 +181,11 @@ Réponds uniquement avec le JSON, rien d'autre.`,
         summary,
         email_advice,
         sms_advice,
+        email_draft,
+        sms_draft,
+        sentiment,
+        warmth_score,
+        warmth_label,
       })
       .eq("id", recording_id);
 
@@ -167,6 +196,11 @@ Réponds uniquement avec le JSON, rien d'autre.`,
         summary,
         email_advice,
         sms_advice,
+        email_draft,
+        sms_draft,
+        sentiment,
+        warmth_score,
+        warmth_label,
       }),
       {
         headers: { "Content-Type": "application/json", ...corsHeaders },

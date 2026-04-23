@@ -918,6 +918,10 @@
           "type": "registry:component"
         },
         {
+          "path": "src/components/atomic-crm/companies/CompanyRecordingsList.tsx",
+          "type": "registry:component"
+        },
+        {
           "path": "src/components/atomic-crm/companies/CompanyQuickCreateDialog.tsx",
           "type": "registry:component"
         },

@@ -109,7 +109,21 @@ export function AudioRecorderDialog({
                 method: "POST",
                 body: { recording_id: data.id },
               })
-              .then(() => {
+              .then(({ error }) => {
+                if (error) {
+                  notify(`Transcription échouée: ${error.message}`, {
+                    type: "error",
+                  });
+                }
+                refresh();
+              })
+              .catch((err) => {
+                notify(
+                  `Transcription échouée: ${
+                    err instanceof Error ? err.message : String(err)
+                  }`,
+                  { type: "error" },
+                );
                 refresh();
               });
           },
