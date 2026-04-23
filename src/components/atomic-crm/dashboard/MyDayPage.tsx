@@ -13,7 +13,7 @@ import { Link } from "react-router";
 import { Card } from "@/components/ui/card";
 
 import { Avatar } from "../contacts/Avatar";
-import type { Contact, Deal, Task } from "../types";
+import type { Appointment, Contact, Deal, DevTask, Task } from "../types";
 
 function sectionTitle(icon: React.ReactNode, label: string) {
   return (
@@ -273,6 +273,33 @@ export const MyDayPage = () => {
     { enabled: !!identity },
   );
 
+  const { data: appointments } = useGetList<Appointment>("appointments", {
+    pagination: { page: 1, perPage: 50 },
+    sort: { field: "start_at", order: "ASC" },
+    filter: identity?.id
+      ? {
+          sales_id: identity.id,
+          "start_at@gte": startOfDay.toISOString(),
+          "start_at@lt": new Date(
+            startOfDay.getTime() + 24 * 60 * 60 * 1000,
+          ).toISOString(),
+        }
+      : {},
+  });
+
+  const { data: myDevTasks } = useGetList<DevTask>(
+    "dev_tasks",
+    {
+      pagination: { page: 1, perPage: 50 },
+      sort: { field: "due_date", order: "ASC" },
+      filter: {
+        "assignee_ids@cs": identity ? `{${identity.id}}` : "{0}",
+        "archived_at@is": null,
+      },
+    },
+    { enabled: !!identity },
+  );
+
   const { data: deals } = useGetList<Deal>("deals", {
     pagination: { page: 1, perPage: 200 },
     filter: { "pipeline_status@eq": "in-progress" },
@@ -307,6 +334,16 @@ export const MyDayPage = () => {
     return Date.now() - ref >= 7 * 24 * 60 * 60 * 1000;
   });
 
+  const todayDevTasks = (myDevTasks ?? []).filter((t) => {
+    if (!t.due_date) return false;
+    const d = new Date(t.due_date);
+    return d >= startOfDay && d < todayEnd;
+  });
+  const overdueDevTasks = (myDevTasks ?? []).filter((t) => {
+    if (!t.due_date) return false;
+    return new Date(t.due_date) < startOfDay;
+  });
+
   // Build timeline: overdue first, then today by time
   const items: TimelineItem[] = [
     ...overdue.slice(0, 5).map<TimelineItem>((t) => ({
@@ -320,6 +357,28 @@ export const MyDayPage = () => {
       meta: "En retard",
       href: t.contact_id ? `/contacts/${t.contact_id}/show` : "/tasks",
     })),
+    ...overdueDevTasks.slice(0, 5).map<TimelineItem>((t) => ({
+      kind: "task",
+      tone: "red",
+      time: new Date(t.due_date!).toLocaleDateString("fr-FR", {
+        day: "2-digit",
+        month: "2-digit",
+      }),
+      title: `🛠 ${t.title}`,
+      meta: "Ticket dev en retard",
+      href: `/dev_tasks/${t.id}/show`,
+    })),
+    ...(appointments ?? []).map<TimelineItem>((a) => ({
+      kind: "task",
+      tone: "accent",
+      time: new Date(a.start_at).toLocaleTimeString("fr-FR", {
+        hour: "2-digit",
+        minute: "2-digit",
+      }),
+      title: `📅 ${a.title}`,
+      meta: a.location ? `RDV · ${a.location}` : "Rendez-vous",
+      href: "/appointments",
+    })),
     ...todayTasks.map<TimelineItem>((t) => ({
       kind: "task",
       tone: "accent",
@@ -330,6 +389,14 @@ export const MyDayPage = () => {
       title: t.text,
       meta: t.type || "Tâche",
       href: t.contact_id ? `/contacts/${t.contact_id}/show` : "/tasks",
+    })),
+    ...todayDevTasks.map<TimelineItem>((t) => ({
+      kind: "task",
+      tone: "accent",
+      time: "Aujourd'hui",
+      title: `🛠 ${t.title}`,
+      meta: "Ticket dev",
+      href: `/dev_tasks/${t.id}/show`,
     })),
   ];
 

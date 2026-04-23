@@ -12,7 +12,8 @@ import "@schedule-x/theme-default/dist/index.css";
 
 import { useTheme } from "@/components/admin/use-theme";
 import { cn } from "@/lib/utils";
-import type { Appointment } from "../types";
+import { useNavigate } from "react-router";
+import type { Appointment, DevTask, Task } from "../types";
 import { AppointmentCreateSheet } from "./AppointmentCreateSheet";
 import { AppointmentEditSheet } from "./AppointmentEditSheet";
 
@@ -25,6 +26,8 @@ const statusColors: Record<string, string> = {
   scheduled: "#22c55e",
   completed: "#3b82f6",
   cancelled: "#ef4444",
+  task: "#f59e0b",
+  dev_task: "#a855f7",
 };
 
 const getCalendarTimeZone = (): CalendarTimeZone =>
@@ -93,24 +96,74 @@ export const AppointmentList = () => {
     };
   }, [theme]);
 
+  const navigate = useNavigate();
+
   const { data: appointments } = useGetList<Appointment>("appointments", {
     pagination: { page: 1, perPage: 1000 },
     sort: { field: "start_at", order: "ASC" },
   });
+  const { data: tasks } = useGetList<Task>("tasks", {
+    pagination: { page: 1, perPage: 1000 },
+    sort: { field: "due_date", order: "ASC" },
+    filter: { "done_date@is": null },
+  });
+  const { data: devTasks } = useGetList<DevTask>("dev_tasks", {
+    pagination: { page: 1, perPage: 1000 },
+    sort: { field: "due_date", order: "ASC" },
+    filter: { "due_date@not.is": null, "archived_at@is": null },
+  });
 
-  const events = useMemo<CalendarEvent[]>(
-    () =>
-      (appointments ?? []).map((a) => ({
-        id: String(a.id),
-        title: a.title,
-        start: appointmentDateTimeFromIso(a.start_at, timeZone),
-        end: appointmentDateTimeFromIso(a.end_at, timeZone),
-        description: a.description ?? "",
-        location: a.location ?? "",
-        calendarId: a.status,
-      })),
-    [appointments, timeZone],
-  );
+  const events = useMemo<CalendarEvent[]>(() => {
+    const appointmentEvents = (appointments ?? []).map<CalendarEvent>((a) => ({
+      id: `appointment:${a.id}`,
+      title: a.title,
+      start: appointmentDateTimeFromIso(a.start_at, timeZone),
+      end: appointmentDateTimeFromIso(a.end_at, timeZone),
+      description: a.description ?? "",
+      location: a.location ?? "",
+      calendarId: a.status,
+    }));
+    const taskEvents = (tasks ?? [])
+      .filter((t) => t.due_date)
+      .map<CalendarEvent>((t) => {
+        const start = appointmentDateTimeFromIso(t.due_date, timeZone);
+        const end = start.add({ minutes: 30 });
+        return {
+          id: `task:${t.id}`,
+          title: `📋 ${t.text ?? "Tâche"}`,
+          start,
+          end,
+          description: t.text ?? "",
+          location: "",
+          calendarId: "task",
+        };
+      });
+    const devTaskEvents = (devTasks ?? [])
+      .filter((t) => t.due_date)
+      .map<CalendarEvent>((t) => {
+        const d = new Date(t.due_date!);
+        const iso = new Date(
+          d.getFullYear(),
+          d.getMonth(),
+          d.getDate(),
+          9,
+          0,
+          0,
+        ).toISOString();
+        const start = appointmentDateTimeFromIso(iso, timeZone);
+        const end = start.add({ hours: 1 });
+        return {
+          id: `dev_task:${t.id}`,
+          title: `🛠 ${t.title}`,
+          start,
+          end,
+          description: t.description ?? "",
+          location: "",
+          calendarId: "dev_task",
+        };
+      });
+    return [...appointmentEvents, ...taskEvents, ...devTaskEvents];
+  }, [appointments, tasks, devTasks, timeZone]);
 
   const views: CalendarConfig["views"] = [
     createViewMonthGrid(),
@@ -164,10 +217,48 @@ export const AppointmentList = () => {
           onContainer: "#fee2e2",
         },
       },
+      task: {
+        colorName: "task",
+        lightColors: {
+          main: statusColors.task,
+          container: "#fef3c7",
+          onContainer: "#78350f",
+        },
+        darkColors: {
+          main: statusColors.task,
+          container: "#78350f",
+          onContainer: "#fef3c7",
+        },
+      },
+      dev_task: {
+        colorName: "dev_task",
+        lightColors: {
+          main: statusColors.dev_task,
+          container: "#f3e8ff",
+          onContainer: "#581c87",
+        },
+        darkColors: {
+          main: statusColors.dev_task,
+          container: "#581c87",
+          onContainer: "#f3e8ff",
+        },
+      },
     },
     callbacks: {
       onEventClick: (event) => {
-        setEditId(event.id);
+        const id = String(event.id);
+        if (id.startsWith("appointment:")) {
+          setEditId(id.slice("appointment:".length));
+          return;
+        }
+        if (id.startsWith("dev_task:")) {
+          navigate(`/dev_tasks/${id.slice("dev_task:".length)}/show`);
+          return;
+        }
+        if (id.startsWith("task:")) {
+          navigate(`/tasks`);
+          return;
+        }
       },
       onClickDate: (date) => {
         const { start, end } = getDefaultDateRange(date, timeZone);
