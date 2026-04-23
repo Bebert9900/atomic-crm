@@ -37,6 +37,8 @@ import { cn } from "@/lib/utils";
 import { PageHeader } from "../layout/PageHeader";
 import type { EmailAccount, Sale } from "../types";
 import { getSupabaseClient } from "../providers/supabase/supabase";
+import { ComposeEmailDialog, type ComposeInitial } from "./ComposeEmailDialog";
+import { Reply, ReplyAll, Forward, PenSquare } from "lucide-react";
 
 type EmailMessage = {
   id: number;
@@ -119,6 +121,10 @@ export const EmailInboxPage = () => {
   const isAdmin = !!(identity as unknown as { administrator?: boolean })
     ?.administrator;
 
+  const [composeOpen, setComposeOpen] = useState(false);
+  const [composeInitial, setComposeInitial] = useState<
+    ComposeInitial | undefined
+  >(undefined);
   const [folder, setFolder] = useState<string>("inbox");
   const [onlyUnread, setOnlyUnread] = useState(false);
   const [accountFilter, setAccountFilter] = useState<string>("all");
@@ -216,15 +222,26 @@ export const EmailInboxPage = () => {
           (accounts?.length ?? 0) > 1 ? "s" : ""
         }`}
       >
-        {isAdmin && (
+        <div className="flex items-center gap-2">
           <Button
-            variant="outline"
             size="sm"
-            onClick={() => navigate("/settings/email-accounts")}
+            onClick={() => {
+              setComposeInitial(undefined);
+              setComposeOpen(true);
+            }}
           >
-            <Settings2 className="h-4 w-4 mr-1" /> Comptes email
+            <PenSquare className="h-4 w-4 mr-1" /> Nouveau message
           </Button>
-        )}
+          {isAdmin && (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => navigate("/settings/email-accounts")}
+            >
+              <Settings2 className="h-4 w-4 mr-1" /> Comptes email
+            </Button>
+          )}
+        </div>
       </PageHeader>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 min-h-[70vh]">
@@ -307,6 +324,14 @@ export const EmailInboxPage = () => {
               salesById={salesById}
               onToggleRead={() => toggleRead(selected)}
               onDelete={() => deleteMessage(selected)}
+              onReply={(replyAll) => {
+                setComposeInitial(buildReplyInitial(selected, replyAll));
+                setComposeOpen(true);
+              }}
+              onForward={() => {
+                setComposeInitial(buildForwardInitial(selected));
+                setComposeOpen(true);
+              }}
             />
           ) : (
             <div className="flex flex-col items-center justify-center flex-1 text-muted-foreground gap-2">
@@ -316,11 +341,89 @@ export const EmailInboxPage = () => {
           )}
         </Card>
       </div>
+
+      <ComposeEmailDialog
+        open={composeOpen}
+        onOpenChange={setComposeOpen}
+        initial={composeInitial}
+      />
     </div>
   );
 };
 
 EmailInboxPage.path = "/mail";
+
+function buildReplyInitial(m: EmailMessage, replyAll: boolean): ComposeInitial {
+  const originalBody = m.text_body || stripHtml(m.html_body || "");
+  const quoted = originalBody
+    .split("\n")
+    .map((l) => `> ${l}`)
+    .join("\n");
+  const dateStr = new Date(m.date).toLocaleString("fr-FR");
+  const from = m.from_name ? `${m.from_name} <${m.from_email}>` : m.from_email;
+  const body = `\n\n\nLe ${dateStr}, ${from} a écrit :\n${quoted}`;
+
+  let cc = "";
+  if (replyAll) {
+    const ccList: string[] = [];
+    const toArr = normalizeEmails(m.to_emails);
+    const ccArr = normalizeEmails(m.cc_emails);
+    ccList.push(...toArr, ...ccArr);
+    cc = Array.from(new Set(ccList)).join(", ");
+  }
+
+  return {
+    email_account_id: m.email_account_id,
+    to: m.from_email,
+    cc,
+    subject: m.subject?.startsWith("Re:")
+      ? m.subject
+      : `Re: ${m.subject ?? ""}`,
+    body,
+    in_reply_to: m.message_id ?? undefined,
+    references: m.message_id ?? undefined,
+  };
+}
+
+function buildForwardInitial(m: EmailMessage): ComposeInitial {
+  const originalBody = m.text_body || stripHtml(m.html_body || "");
+  const dateStr = new Date(m.date).toLocaleString("fr-FR");
+  const from = m.from_name ? `${m.from_name} <${m.from_email}>` : m.from_email;
+  const toArr = normalizeEmails(m.to_emails).join(", ");
+  const header = `\n\n\n---------- Message transféré ----------\nDe : ${from}\nDate : ${dateStr}\nSujet : ${m.subject ?? ""}\nÀ : ${toArr}\n\n`;
+  return {
+    email_account_id: m.email_account_id,
+    to: "",
+    subject: m.subject?.startsWith("Fwd:")
+      ? m.subject
+      : `Fwd: ${m.subject ?? ""}`,
+    body: header + originalBody,
+  };
+}
+
+function normalizeEmails(
+  raw:
+    | Array<{ email: string; name?: string }>
+    | string[]
+    | string
+    | null
+    | undefined,
+): string[] {
+  if (!raw) return [];
+  if (typeof raw === "string") return [raw];
+  return raw.map((r) => (typeof r === "string" ? r : r.email)).filter(Boolean);
+}
+
+function stripHtml(html: string): string {
+  return html
+    .replace(/<br\s*\/?>/gi, "\n")
+    .replace(/<\/p>/gi, "\n\n")
+    .replace(/<[^>]+>/g, "")
+    .replace(/&nbsp;/g, " ")
+    .replace(/&amp;/g, "&")
+    .replace(/&lt;/g, "<")
+    .replace(/&gt;/g, ">");
+}
 
 function EmailRow({
   message,
@@ -397,12 +500,16 @@ function EmailDetail({
   salesById,
   onToggleRead,
   onDelete,
+  onReply,
+  onForward,
 }: {
   message: EmailMessage;
   accounts: EmailAccount[];
   salesById: Map<number | string, Sale>;
   onToggleRead: () => void;
   onDelete: () => void;
+  onReply: (replyAll: boolean) => void;
+  onForward: () => void;
 }) {
   const account = accounts.find((a) => a.id === message.email_account_id);
   const sale = message.sales_id ? salesById.get(message.sales_id) : null;
@@ -465,6 +572,33 @@ function EmailDetail({
           <Button
             variant="ghost"
             size="sm"
+            onClick={() => onReply(false)}
+            className="h-8"
+            title="Répondre"
+          >
+            <Reply className="h-4 w-4" />
+          </Button>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => onReply(true)}
+            className="h-8"
+            title="Répondre à tous"
+          >
+            <ReplyAll className="h-4 w-4" />
+          </Button>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={onForward}
+            className="h-8"
+            title="Transférer"
+          >
+            <Forward className="h-4 w-4" />
+          </Button>
+          <Button
+            variant="ghost"
+            size="sm"
             onClick={onToggleRead}
             className="h-8"
             title={message.is_read ? "Marquer non lu" : "Marquer lu"}
@@ -476,6 +610,7 @@ function EmailDetail({
             size="sm"
             onClick={onDelete}
             className="h-8 text-destructive"
+            title="Supprimer"
           >
             <Trash2 className="h-4 w-4" />
           </Button>
