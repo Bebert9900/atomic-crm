@@ -18,6 +18,21 @@ import { AppointmentCreateSheet } from "./AppointmentCreateSheet";
 import { AppointmentEditSheet } from "./AppointmentEditSheet";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import {
+  Dialog,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Badge } from "@/components/ui/badge";
+import {
+  ExternalLink,
+  Calendar as CalIcon,
+  MapPin,
+  Clock,
+  User as UserIcon,
+} from "lucide-react";
 
 // Fixed palette, cycled by sales id for deterministic per-user colors.
 const USER_PALETTE = [
@@ -128,6 +143,13 @@ export const AppointmentList = () => {
   });
 
   const [hiddenSaleIds, setHiddenSaleIds] = useState<Set<number>>(new Set());
+
+  type PopupSelection =
+    | { kind: "appointment"; id: number }
+    | { kind: "task"; id: number }
+    | { kind: "devtask"; id: number }
+    | null;
+  const [popup, setPopup] = useState<PopupSelection>(null);
 
   const { data: appointments } = useGetList<Appointment>("appointments", {
     pagination: { page: 1, perPage: 1000 },
@@ -325,15 +347,21 @@ export const AppointmentList = () => {
       onEventClick: (event) => {
         const id = String(event.id);
         if (id.startsWith("appointment_")) {
-          setEditId(id.slice("appointment_".length));
+          setPopup({
+            kind: "appointment",
+            id: Number(id.slice("appointment_".length)),
+          });
           return;
         }
         if (id.startsWith("devtask_")) {
-          navigate(`/dev_tasks/${id.slice("devtask_".length)}/show`);
+          setPopup({
+            kind: "devtask",
+            id: Number(id.slice("devtask_".length)),
+          });
           return;
         }
         if (id.startsWith("task_")) {
-          navigate(`/tasks`);
+          setPopup({ kind: "task", id: Number(id.slice("task_".length)) });
           return;
         }
       },
@@ -471,6 +499,272 @@ export const AppointmentList = () => {
           appointmentId={editId}
         />
       )}
+
+      <EventPopup
+        selection={popup}
+        onClose={() => setPopup(null)}
+        appointments={appointments ?? []}
+        tasks={tasks ?? []}
+        devTasks={devTasks ?? []}
+        sales={sales ?? []}
+        onEditAppointment={(id) => {
+          setPopup(null);
+          setEditId(String(id));
+        }}
+        onOpenDevTask={(id) => {
+          setPopup(null);
+          navigate(`/dev_tasks/${id}/show`);
+        }}
+        onOpenContact={(id) => {
+          setPopup(null);
+          navigate(`/contacts/${id}/show`);
+        }}
+      />
     </div>
   );
 };
+
+function EventPopup({
+  selection,
+  onClose,
+  appointments,
+  tasks,
+  devTasks,
+  sales,
+  onEditAppointment,
+  onOpenDevTask,
+  onOpenContact,
+}: {
+  selection:
+    | { kind: "appointment"; id: number }
+    | { kind: "task"; id: number }
+    | { kind: "devtask"; id: number }
+    | null;
+  onClose: () => void;
+  appointments: Appointment[];
+  tasks: Task[];
+  devTasks: DevTask[];
+  sales: Sale[];
+  onEditAppointment: (id: number) => void;
+  onOpenDevTask: (id: number) => void;
+  onOpenContact: (id: number) => void;
+}) {
+  const salesById = new Map(sales.map((s) => [s.id, s]));
+
+  const renderAppointment = (id: number) => {
+    const a = appointments.find((x) => x.id === id);
+    if (!a) return null;
+    const sale = a.sales_id ? salesById.get(a.sales_id) : null;
+    const color = colorForSaleId(a.sales_id);
+    return (
+      <>
+        <DialogHeader>
+          <div className="flex items-center gap-2">
+            <span
+              className="inline-block w-2.5 h-2.5 rounded-full shrink-0"
+              style={{ backgroundColor: color.main }}
+            />
+            <DialogTitle className="text-left flex-1">📅 {a.title}</DialogTitle>
+          </div>
+        </DialogHeader>
+        <div className="space-y-2 text-sm">
+          <div className="flex items-center gap-2 text-muted-foreground">
+            <Clock className="h-4 w-4" />
+            <span>
+              {new Date(a.start_at).toLocaleString("fr-FR")} →{" "}
+              {new Date(a.end_at).toLocaleString("fr-FR")}
+            </span>
+          </div>
+          {a.location && (
+            <div className="flex items-center gap-2 text-muted-foreground">
+              <MapPin className="h-4 w-4" />
+              <span>{a.location}</span>
+            </div>
+          )}
+          {sale && (
+            <div className="flex items-center gap-2 text-muted-foreground">
+              <UserIcon className="h-4 w-4" />
+              <span>
+                {sale.first_name} {sale.last_name}
+              </span>
+            </div>
+          )}
+          <div className="flex items-center gap-2 flex-wrap">
+            {a.status && (
+              <Badge variant="secondary" className="text-[10px]">
+                {a.status}
+              </Badge>
+            )}
+            {a.source && (
+              <Badge variant="outline" className="text-[10px]">
+                {a.source}
+              </Badge>
+            )}
+          </div>
+          {a.description && (
+            <div className="bg-muted rounded-md p-2 whitespace-pre-wrap">
+              {a.description}
+            </div>
+          )}
+        </div>
+        <DialogFooter>
+          {a.contact_id && (
+            <Button
+              variant="outline"
+              onClick={() => onOpenContact(Number(a.contact_id))}
+            >
+              Fiche contact
+            </Button>
+          )}
+          <Button onClick={() => onEditAppointment(Number(a.id))}>
+            <ExternalLink className="h-3.5 w-3.5 mr-1" /> Modifier
+          </Button>
+        </DialogFooter>
+      </>
+    );
+  };
+
+  const renderTask = (id: number) => {
+    const t = tasks.find((x) => x.id === id);
+    if (!t) return null;
+    const sale = t.sales_id ? salesById.get(t.sales_id) : null;
+    const color = colorForSaleId(t.sales_id);
+    return (
+      <>
+        <DialogHeader>
+          <div className="flex items-center gap-2">
+            <span
+              className="inline-block w-2.5 h-2.5 rounded-full shrink-0"
+              style={{ backgroundColor: color.main }}
+            />
+            <DialogTitle className="text-left flex-1">
+              📋 {t.text ?? "Tâche"}
+            </DialogTitle>
+          </div>
+        </DialogHeader>
+        <div className="space-y-2 text-sm">
+          <div className="flex items-center gap-2 text-muted-foreground">
+            <CalIcon className="h-4 w-4" />
+            <span>
+              Échéance : {new Date(t.due_date).toLocaleString("fr-FR")}
+            </span>
+          </div>
+          {sale && (
+            <div className="flex items-center gap-2 text-muted-foreground">
+              <UserIcon className="h-4 w-4" />
+              <span>
+                {sale.first_name} {sale.last_name}
+              </span>
+            </div>
+          )}
+          {t.type && t.type !== "none" && (
+            <Badge variant="secondary" className="text-[10px]">
+              {t.type}
+            </Badge>
+          )}
+        </div>
+        <DialogFooter>
+          {t.contact_id && (
+            <Button
+              variant="outline"
+              onClick={() => onOpenContact(Number(t.contact_id))}
+            >
+              Fiche contact
+            </Button>
+          )}
+        </DialogFooter>
+      </>
+    );
+  };
+
+  const renderDevTask = (id: number) => {
+    const t = devTasks.find((x) => x.id === id);
+    if (!t) return null;
+    const assigneeIds = (t.assignee_ids ?? []) as Array<number | string>;
+    const assignees = assigneeIds
+      .map((aid) => salesById.get(Number(aid)))
+      .filter((x): x is Sale => !!x);
+    const ownerColor = colorForSaleId(assigneeIds[0]);
+    return (
+      <>
+        <DialogHeader>
+          <div className="flex items-center gap-2">
+            <span
+              className="inline-block w-2.5 h-2.5 rounded-full shrink-0"
+              style={{ backgroundColor: ownerColor.main }}
+            />
+            <DialogTitle className="text-left flex-1">🛠 {t.title}</DialogTitle>
+          </div>
+        </DialogHeader>
+        <div className="space-y-2 text-sm">
+          {t.due_date && (
+            <div className="flex items-center gap-2 text-muted-foreground">
+              <CalIcon className="h-4 w-4" />
+              <span>
+                Échéance : {new Date(t.due_date).toLocaleDateString("fr-FR")}
+              </span>
+            </div>
+          )}
+          {assignees.length > 0 && (
+            <div className="flex items-center gap-2 flex-wrap">
+              <UserIcon className="h-4 w-4 text-muted-foreground" />
+              {assignees.map((a) => {
+                const c = colorForSaleId(a.id);
+                return (
+                  <span
+                    key={a.id}
+                    className="inline-flex items-center gap-1 text-xs px-1.5 py-0.5 rounded-full border"
+                    style={{ borderColor: c.main, color: c.main }}
+                  >
+                    <span
+                      className="inline-block w-1.5 h-1.5 rounded-full"
+                      style={{ backgroundColor: c.main }}
+                    />
+                    {a.first_name} {a.last_name}
+                  </span>
+                );
+              })}
+            </div>
+          )}
+          <div className="flex items-center gap-2 flex-wrap">
+            {t.status && (
+              <Badge variant="secondary" className="text-[10px]">
+                {t.status}
+              </Badge>
+            )}
+            {t.priority && t.priority !== "none" && (
+              <Badge variant="outline" className="text-[10px]">
+                {t.priority}
+              </Badge>
+            )}
+          </div>
+          {t.description && (
+            <div className="bg-muted rounded-md p-2 whitespace-pre-wrap">
+              {t.description}
+            </div>
+          )}
+        </div>
+        <DialogFooter>
+          <Button onClick={() => onOpenDevTask(Number(t.id))}>
+            <ExternalLink className="h-3.5 w-3.5 mr-1" /> Ouvrir le ticket
+          </Button>
+        </DialogFooter>
+      </>
+    );
+  };
+
+  return (
+    <Dialog
+      open={!!selection}
+      onOpenChange={(open) => {
+        if (!open) onClose();
+      }}
+    >
+      <DialogContent className="sm:max-w-lg">
+        {selection?.kind === "appointment" && renderAppointment(selection.id)}
+        {selection?.kind === "task" && renderTask(selection.id)}
+        {selection?.kind === "devtask" && renderDevTask(selection.id)}
+      </DialogContent>
+    </Dialog>
+  );
+}
