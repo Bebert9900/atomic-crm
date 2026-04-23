@@ -13,6 +13,10 @@ import { Link } from "react-router";
 import { Card } from "@/components/ui/card";
 
 import { Avatar } from "../contacts/Avatar";
+import { useState } from "react";
+import { CheckCircle2 } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { MarkDoneDialog, type MarkDoneKind } from "../misc/MarkDoneDialog";
 import type { Appointment, Contact, Deal, DevTask, Task } from "../types";
 
 function sectionTitle(icon: React.ReactNode, label: string) {
@@ -91,6 +95,11 @@ type TimelineItem = {
   title: string;
   meta: string;
   href: string;
+  doneTarget?: {
+    kind: MarkDoneKind;
+    id: number;
+    contactId?: number | null;
+  };
 };
 
 const toneMap: Record<TimelineItem["tone"], string> = {
@@ -109,30 +118,62 @@ const iconMap: Record<TimelineItem["kind"], React.ReactNode> = {
 };
 
 function TimelineRow({ item }: { item: TimelineItem }) {
+  const [doneOpen, setDoneOpen] = useState(false);
   return (
-    <Link
-      to={item.href}
-      className="px-4 py-2.5 flex gap-3 items-center hover:bg-muted/30 no-underline text-foreground"
-    >
-      <div className="w-12 text-[11px] text-muted-foreground tabular-nums">
-        {item.time}
+    <>
+      <div className="px-4 py-2.5 flex gap-3 items-center hover:bg-muted/30">
+        <Link
+          to={item.href}
+          className="flex-1 flex gap-3 items-center no-underline text-foreground min-w-0"
+        >
+          <div className="w-12 text-[11px] text-muted-foreground tabular-nums">
+            {item.time}
+          </div>
+          <div
+            className="size-7 shrink-0 rounded-md grid place-items-center"
+            style={{
+              background: `color-mix(in oklch, ${toneMap[item.tone]} 14%, transparent)`,
+              color: toneMap[item.tone],
+            }}
+          >
+            {iconMap[item.kind]}
+          </div>
+          <div className="flex-1 min-w-0">
+            <div className="text-[12.5px] leading-snug truncate">
+              {item.title}
+            </div>
+            <div className="text-[11px] text-muted-foreground truncate">
+              {item.meta}
+            </div>
+          </div>
+        </Link>
+        {item.doneTarget && (
+          <Button
+            size="sm"
+            variant="ghost"
+            className="h-7 text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-950"
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              setDoneOpen(true);
+            }}
+            title="Marquer comme fait"
+          >
+            <CheckCircle2 className="h-4 w-4" />
+          </Button>
+        )}
       </div>
-      <div
-        className="size-7 shrink-0 rounded-md grid place-items-center"
-        style={{
-          background: `color-mix(in oklch, ${toneMap[item.tone]} 14%, transparent)`,
-          color: toneMap[item.tone],
-        }}
-      >
-        {iconMap[item.kind]}
-      </div>
-      <div className="flex-1 min-w-0">
-        <div className="text-[12.5px] leading-snug truncate">{item.title}</div>
-        <div className="text-[11px] text-muted-foreground truncate">
-          {item.meta}
-        </div>
-      </div>
-    </Link>
+      {item.doneTarget && doneOpen && (
+        <MarkDoneDialog
+          open={doneOpen}
+          onOpenChange={setDoneOpen}
+          kind={item.doneTarget.kind}
+          id={item.doneTarget.id}
+          contactId={item.doneTarget.contactId}
+          title={item.title}
+        />
+      )}
+    </>
   );
 }
 
@@ -356,6 +397,11 @@ export const MyDayPage = () => {
       title: `⚠ ${t.text}`,
       meta: "En retard",
       href: t.contact_id ? `/contacts/${t.contact_id}/show` : "/tasks",
+      doneTarget: {
+        kind: "task",
+        id: Number(t.id),
+        contactId: t.contact_id ?? null,
+      },
     })),
     ...overdueDevTasks.slice(0, 5).map<TimelineItem>((t) => ({
       kind: "task",
@@ -367,10 +413,15 @@ export const MyDayPage = () => {
       title: `🛠 ${t.title}`,
       meta: "Ticket dev en retard",
       href: `/dev_tasks/${t.id}/show`,
+      doneTarget: {
+        kind: "devtask",
+        id: Number(t.id),
+        contactId: (t.contact_id as number | null) ?? null,
+      },
     })),
     ...(appointments ?? []).map<TimelineItem>((a) => ({
-      kind: "task",
-      tone: "accent",
+      kind: "meeting",
+      tone: "cool",
       time: new Date(a.start_at).toLocaleTimeString("fr-FR", {
         hour: "2-digit",
         minute: "2-digit",
@@ -378,6 +429,14 @@ export const MyDayPage = () => {
       title: `📅 ${a.title}`,
       meta: a.location ? `RDV · ${a.location}` : "Rendez-vous",
       href: "/appointments",
+      doneTarget:
+        a.status !== "completed"
+          ? {
+              kind: "appointment",
+              id: Number(a.id),
+              contactId: a.contact_id ?? null,
+            }
+          : undefined,
     })),
     ...todayTasks.map<TimelineItem>((t) => ({
       kind: "task",
@@ -389,6 +448,11 @@ export const MyDayPage = () => {
       title: t.text,
       meta: t.type || "Tâche",
       href: t.contact_id ? `/contacts/${t.contact_id}/show` : "/tasks",
+      doneTarget: {
+        kind: "task",
+        id: Number(t.id),
+        contactId: t.contact_id ?? null,
+      },
     })),
     ...todayDevTasks.map<TimelineItem>((t) => ({
       kind: "task",
@@ -397,6 +461,11 @@ export const MyDayPage = () => {
       title: `🛠 ${t.title}`,
       meta: "Ticket dev",
       href: `/dev_tasks/${t.id}/show`,
+      doneTarget: {
+        kind: "devtask",
+        id: Number(t.id),
+        contactId: (t.contact_id as number | null) ?? null,
+      },
     })),
   ];
 

@@ -498,6 +498,10 @@
           "type": "registry:component"
         },
         {
+          "path": "src/components/atomic-crm/misc/MarkDoneDialog.tsx",
+          "type": "registry:component"
+        },
+        {
           "path": "src/components/atomic-crm/misc/InfinitePagination.tsx",
           "type": "registry:component"
         },

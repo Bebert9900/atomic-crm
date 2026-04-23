@@ -1,4 +1,5 @@
-import { Archive, ArchiveRestore } from "lucide-react";
+import { Archive, ArchiveRestore, CheckCircle2 } from "lucide-react";
+import { useState } from "react";
 import {
   ShowBase,
   useGetList,
@@ -8,6 +9,8 @@ import {
   useRefresh,
   useUpdate,
 } from "ra-core";
+
+import { MarkDoneDialog } from "../misc/MarkDoneDialog";
 import { DeleteButton } from "@/components/admin/delete-button";
 import { EditButton } from "@/components/admin/edit-button";
 import { ReferenceField } from "@/components/admin/reference-field";
@@ -90,6 +93,7 @@ const DevTaskShowContent = () => {
             </>
           ) : (
             <>
+              {record.status !== "done" && <DoneButton record={record} />}
               <ArchiveButton record={record} />
               <EditButton />
             </>
@@ -201,6 +205,32 @@ const ArchivedBanner = () => (
     <h3 className="text-lg font-bold text-white">Ticket archivé</h3>
   </div>
 );
+
+const DoneButton = ({ record }: { record: DevTask }) => {
+  const [open, setOpen] = useState(false);
+  return (
+    <>
+      <Button
+        onClick={() => setOpen(true)}
+        size="sm"
+        className="flex items-center gap-2 h-9 bg-emerald-600 hover:bg-emerald-700"
+      >
+        <CheckCircle2 className="w-4 h-4" />
+        Fait
+      </Button>
+      {open && (
+        <MarkDoneDialog
+          open={open}
+          onOpenChange={setOpen}
+          kind="devtask"
+          id={Number(record.id)}
+          title={record.title}
+          contactId={(record.contact_id as number | null) ?? null}
+        />
+      )}
+    </>
+  );
+};
 
 const ArchiveButton = ({ record }: { record: DevTask }) => {
   const [update] = useUpdate();
