@@ -189,24 +189,21 @@ export function RecordingItem({
             )}
           </div>
         </div>
-        {(recording.transcription_status === "pending" ||
-          recording.transcription_status === "error") && (
-          <Button
-            variant="ghost"
-            size="icon"
-            className="h-7 w-7 text-muted-foreground hover:text-blue-500"
-            aria-label="Relancer la transcription"
-            onClick={handleRetry}
-            disabled={isRetrying}
-            title="Relancer la transcription"
-          >
-            {isRetrying ? (
-              <Loader2 className="h-3.5 w-3.5 animate-spin" />
-            ) : (
-              <RefreshCcw className="h-3.5 w-3.5" />
-            )}
-          </Button>
-        )}
+        <Button
+          variant="ghost"
+          size="icon"
+          className="h-7 w-7 text-muted-foreground hover:text-blue-500"
+          aria-label="Relancer la transcription"
+          onClick={handleRetry}
+          disabled={isRetrying}
+          title="Relancer la transcription"
+        >
+          {isRetrying ? (
+            <Loader2 className="h-3.5 w-3.5 animate-spin" />
+          ) : (
+            <RefreshCcw className="h-3.5 w-3.5" />
+          )}
+        </Button>
         <Button
           variant="ghost"
           size="icon"
