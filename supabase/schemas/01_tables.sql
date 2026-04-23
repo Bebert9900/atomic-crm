@@ -395,3 +395,37 @@ create table public.subscriptions (
 create index if not exists subscriptions_company_id_idx on public.subscriptions (company_id);
 create index if not exists subscriptions_stripe_customer_id_idx on public.subscriptions (stripe_customer_id);
 create index if not exists subscriptions_status_idx on public.subscriptions (status);
+
+-- Agentic: skill runs persistence (trace of each agent execution)
+create table public.skill_runs (
+    id bigint generated always as identity primary key,
+    skill_id text not null,
+    skill_version text not null,
+    user_id uuid not null references auth.users(id),
+    tenant_id uuid,
+    input jsonb not null default '{}'::jsonb,
+    trace jsonb not null default '[]'::jsonb,
+    output jsonb,
+    status text not null default 'running'
+        check (status in ('running','success','error','cancelled','shadow')),
+    dry_run boolean not null default false,
+    input_tokens int,
+    output_tokens int,
+    cache_read_tokens int,
+    cache_creation_tokens int,
+    cost_usd numeric(10,6),
+    error_code text,
+    error_message text,
+    model text,
+    started_at timestamptz not null default now(),
+    ended_at timestamptz
+);
+
+create index if not exists skill_runs_user_id_started_at_idx
+    on public.skill_runs (user_id, started_at desc);
+create index if not exists skill_runs_skill_id_started_at_idx
+    on public.skill_runs (skill_id, started_at desc);
+create index if not exists skill_runs_status_running_idx
+    on public.skill_runs (status) where status = 'running';
+create index if not exists skill_runs_tenant_id_started_at_idx
+    on public.skill_runs (tenant_id, started_at desc) where tenant_id is not null;

@@ -135,3 +135,24 @@ from (
     select sales.id from public.sales limit 1
 ) sub;
 
+-- Agentic: hourly metrics of skill runs over last 24h (for ops dashboard)
+create or replace view public.skill_runs_metrics_1d with (security_invoker = on) as
+select
+    skill_id,
+    date_trunc('hour', started_at) as bucket,
+    count(*) as runs,
+    count(*) filter (where status = 'success') as successes,
+    count(*) filter (where status = 'error') as errors,
+    count(*) filter (where status = 'cancelled') as cancellations,
+    count(*) filter (where dry_run) as dry_runs,
+    avg(extract(epoch from ended_at - started_at))
+        filter (where ended_at is not null) as avg_duration_s,
+    percentile_disc(0.95) within group (order by extract(epoch from ended_at - started_at))
+        filter (where ended_at is not null) as p95_duration_s,
+    sum(cost_usd) as total_cost_usd,
+    sum(input_tokens) as total_input_tokens,
+    sum(output_tokens) as total_output_tokens
+from public.skill_runs
+where started_at > now() - interval '24 hours'
+group by 1, 2;
+

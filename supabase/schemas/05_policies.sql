@@ -127,3 +127,14 @@ create policy "Enable read for authenticated" on public.subscriptions for select
 create policy "Enable insert for service role" on public.subscriptions for insert to service_role with check (true);
 create policy "Enable update for service role" on public.subscriptions for update to service_role using (true) with check (true);
 create policy "Enable delete for service role" on public.subscriptions for delete to service_role using (true);
+
+-- Agentic: skill_runs — user-scoped (each user sees only their own runs)
+alter table public.skill_runs enable row level security;
+create policy "skill_runs_select_own" on public.skill_runs
+    for select to authenticated using (user_id = auth.uid());
+create policy "skill_runs_insert_own" on public.skill_runs
+    for insert to authenticated with check (user_id = auth.uid());
+create policy "skill_runs_update_own" on public.skill_runs
+    for update to authenticated using (user_id = auth.uid()) with check (user_id = auth.uid());
+create policy "skill_runs_service_all" on public.skill_runs
+    for all to service_role using (true) with check (true);

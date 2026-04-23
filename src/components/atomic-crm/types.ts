@@ -383,3 +383,63 @@ export type Subscription = {
   updated_at: string;
   created_at: string;
 } & Pick<RaRecord, "id">;
+
+// Agentic: skill runs
+export type SkillRunStatus =
+  | "running"
+  | "success"
+  | "error"
+  | "cancelled"
+  | "shadow";
+
+export type SkillRunTraceStep =
+  | { step: number; type: "user"; content: string; ts: string }
+  | { step: number; type: "assistant_text"; content: string; ts: string }
+  | { step: number; type: "assistant_thinking"; content: string; ts: string }
+  | {
+      step: number;
+      type: "tool_use";
+      tool: string;
+      args: unknown;
+      tool_use_id: string;
+      ts: string;
+    }
+  | {
+      step: number;
+      type: "tool_result";
+      tool_use_id: string;
+      result: unknown;
+      duration_ms: number;
+      status: "ok" | "error";
+      ts: string;
+    }
+  | {
+      step: number;
+      type: "guardrail";
+      name: string;
+      outcome: "allow" | "deny";
+      reason: string;
+      ts: string;
+    };
+
+export type SkillRun = {
+  skill_id: string;
+  skill_version: string;
+  user_id: string;
+  tenant_id?: string | null;
+  input: Record<string, unknown>;
+  trace: SkillRunTraceStep[];
+  output?: unknown;
+  status: SkillRunStatus;
+  dry_run: boolean;
+  input_tokens?: number | null;
+  output_tokens?: number | null;
+  cache_read_tokens?: number | null;
+  cache_creation_tokens?: number | null;
+  cost_usd?: number | null;
+  error_code?: string | null;
+  error_message?: string | null;
+  model?: string | null;
+  started_at: string;
+  ended_at?: string | null;
+} & Pick<RaRecord, "id">;

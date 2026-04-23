@@ -629,3 +629,16 @@ BEGIN
 END;
 $$;
 
+-- Agentic: append a step to a skill_run trace. Security invoker so RLS applies.
+create or replace function public.append_skill_run_trace(
+    p_run_id bigint,
+    p_step jsonb
+) returns void
+    language sql
+    security invoker
+as $$
+    update public.skill_runs
+    set trace = trace || jsonb_build_array(p_step)
+    where id = p_run_id and user_id = auth.uid();
+$$;
+

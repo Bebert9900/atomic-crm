@@ -243,3 +243,12 @@ alter default privileges for role postgres in schema public grant all on tables 
 alter default privileges for role postgres in schema public grant all on tables to anon;
 alter default privileges for role postgres in schema public grant all on tables to authenticated;
 alter default privileges for role postgres in schema public grant all on tables to service_role;
+
+-- Agentic: explicit grants (default privileges apply only to newly created tables)
+grant select, insert, update on public.skill_runs to authenticated;
+grant all on public.skill_runs to service_role;
+grant usage, select on sequence public.skill_runs_id_seq to authenticated;
+grant select on public.skill_runs_metrics_1d to authenticated;
+
+grant all on function public.append_skill_run_trace(bigint, jsonb) to authenticated;
+grant all on function public.append_skill_run_trace(bigint, jsonb) to service_role;
