@@ -37,6 +37,7 @@ import { SettingsPageMobile } from "../settings/SettingsPageMobile";
 import { ProfilePage } from "../settings/ProfilePage";
 import { SettingsPage } from "../settings/SettingsPage";
 import { EmailAccountsPage } from "../settings/EmailAccountsPage";
+import { EmailInboxPage } from "../emails/EmailInboxPage";
 import {
   CONFIGURATION_STORE_KEY,
   type ConfigurationContextValue,
@@ -274,6 +275,7 @@ const DesktopAdmin = (
         <Route path={ProfilePage.path} element={<ProfilePage />} />
         <Route path={SettingsPage.path} element={<SettingsPage />} />
         <Route path={EmailAccountsPage.path} element={<EmailAccountsPage />} />
+        <Route path={EmailInboxPage.path} element={<EmailInboxPage />} />
         <Route path={ImportPage.path} element={<ImportPage />} />
         <Route path={TasksPage.path} element={<TasksPage />} />
         <Route path={MyDayPage.path} element={<MyDayPage />} />
