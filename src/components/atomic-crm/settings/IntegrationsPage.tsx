@@ -20,6 +20,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
+import { cn } from "@/lib/utils";
 
 import { PageHeader } from "../layout/PageHeader";
 import { getSupabaseClient } from "../providers/supabase/supabase";
@@ -92,33 +93,77 @@ const INTEGRATIONS: IntegrationDef[] = [
   {
     id: "billionmail",
     title: "BillionMail",
-    subtitle: "Pousse les contacts dans la liste Fabrik de BillionMail",
+    subtitle:
+      "Pousse les contacts dans la liste Fabrik + envoi d'emails transactionnels",
     icon: Send,
     fields: [
       {
         key: "base_url",
-        label: "URL BillionMail",
+        label: "URL BillionMail (sans slash final)",
         placeholder: "https://mail.fabrik.so",
       },
       {
-        key: "api_key",
-        label: "API Key",
+        key: "admin_key",
+        label: "Admin API Key (Bearer, pour gérer les contacts/listes)",
         secret: true,
+        helpText:
+          "Récupérée dans Settings de BillionMail. Envoyée en Authorization: Bearer.",
+      },
+      {
+        key: "send_key",
+        label: "Send API Key (X-API-Key, pour envoyer des mails)",
+        secret: true,
+        helpText:
+          "Créée via Sending API → Create API. Nécessite l'IP publique Supabase en whitelist.",
       },
       {
         key: "list_id",
         label: "ID de la liste Fabrik",
-        placeholder: "fabrik-list",
+        placeholder: "1",
+        helpText:
+          "L'ID numérique de la liste de diffusion visible dans l'UI BillionMail.",
+      },
+      {
+        key: "contacts_endpoint",
+        label: "Endpoint d'ajout de contact (à récupérer du Swagger)",
+        placeholder: "/api/mailinglists/contacts/add",
+        helpText:
+          "Varie selon la version BillionMail. Ouvrir <base_url>/swagger, chercher un POST qui prend list_id + email.",
+      },
+      {
+        key: "default_sender",
+        label: "Expéditeur par défaut (optionnel)",
+        placeholder: "noreply@fabrik.so",
       },
     ],
     setupSteps: [
       {
-        title: "⚠️ En attente de l'API BillionMail",
-        body: "L'API BillionMail n'est pas standardisée. Fournir à l'équipe dev : l'endpoint de création d'abonné, le format du body JSON attendu, et l'en-tête d'auth (Bearer, X-API-Key, etc). Une fois ces infos connues on branchera un trigger Postgres qui pousse chaque contact créé/modifié vers la liste Fabrik.",
+        title: "1. Prérequis BillionMail",
+        body: "Instance BillionMail en place, domaine configuré avec SPF/DKIM/DMARC, activer Swagger dans Settings.",
       },
       {
-        title: "En attendant",
-        body: "Tu peux déjà saisir les champs ci-dessous, ils seront utilisés quand la couche d'intégration sera écrite.",
+        title: "2. Récupérer l'Admin Key",
+        body: "BillionMail → Settings → copier l'API Key générale. C'est elle qui gère contacts, listes, stats (header Authorization: Bearer).",
+      },
+      {
+        title: "3. Créer une Send Key",
+        body: "BillionMail → Sending API → Create API. Nommer, lier à un template d'email, définir sender + sujet par défaut. Whitelist IP : mettre l'IP sortante des edge functions Supabase (voir ci-dessous).",
+      },
+      {
+        title: "4. IP sortante Supabase à whitelist",
+        body: "Les edge functions de ton projet sortent depuis un range AWS. Pour l'obtenir précisément : Supabase Dashboard → Project Settings → IPv4 Address, OU lance un curl depuis une edge function vers https://ifconfig.me. Coller cette IP dans la whitelist de la Send API.",
+      },
+      {
+        title: "5. Récupérer l'ID de la liste",
+        body: "BillionMail → Newsletter / Mailing Lists → créer ou sélectionner la liste « Fabrik ». Son ID (numérique) est visible dans l'URL ou via Swagger.",
+      },
+      {
+        title: "6. Trouver le bon endpoint contacts",
+        body: "Aller sur <base_url>/swagger. Chercher un endpoint POST qui prend { list_id, email, name }. Coller son path dans le champ Endpoint. Valeurs courantes : /api/mailinglists/contacts/add, /api/newsletter/subscribers, /api/contacts/create.",
+      },
+      {
+        title: "7. Tester la connexion",
+        body: "Remplir tous les champs, activer Actif, enregistrer. Puis utiliser le bouton « Tester avec un contact » (affiché sous la carte une fois les champs remplis) pour pousser un faux contact vers la liste. Si ça renvoie success, on peut brancher la sync auto.",
       },
     ],
   },
@@ -419,8 +464,80 @@ function IntegrationCard({
             {saving ? "Enregistrement…" : "Enregistrer"}
           </Button>
         </div>
+
+        {def.id === "billionmail" && configured && enabled && (
+          <BillionMailTestBlock />
+        )}
       </CardContent>
     </Card>
+  );
+}
+
+function BillionMailTestBlock() {
+  const notify = useNotify();
+  const [email, setEmail] = useState("");
+  const [running, setRunning] = useState(false);
+  const [result, setResult] = useState<null | {
+    ok: boolean;
+    body: string;
+  }>(null);
+
+  const run = async () => {
+    if (!email.includes("@")) {
+      notify("Email invalide", { type: "error" });
+      return;
+    }
+    setRunning(true);
+    setResult(null);
+    const { data, error } = await getSupabaseClient().functions.invoke(
+      "billionmail_push_contact",
+      { body: { email, name: "BillionMail Test" } },
+    );
+    if (error) {
+      setResult({ ok: false, body: error.message });
+      setRunning(false);
+      return;
+    }
+    const resp = data as { ok?: boolean } & Record<string, unknown>;
+    setResult({
+      ok: !!resp.ok,
+      body: JSON.stringify(resp, null, 2),
+    });
+    setRunning(false);
+  };
+
+  return (
+    <div className="rounded-md border border-border bg-muted/20 p-3 flex flex-col gap-2">
+      <p className="text-xs font-medium">Tester avec un contact</p>
+      <p className="text-[11px] text-muted-foreground">
+        Pousse un faux contact vers la liste Fabrik pour valider base_url +
+        admin_key + list_id + endpoint.
+      </p>
+      <div className="flex items-center gap-2">
+        <Input
+          type="email"
+          placeholder="test+bm@fabrik.so"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+          className="h-8 text-xs"
+        />
+        <Button size="sm" variant="secondary" onClick={run} disabled={running}>
+          {running ? "Envoi…" : "Tester"}
+        </Button>
+      </div>
+      {result && (
+        <pre
+          className={cn(
+            "text-[11px] p-2 rounded-md overflow-auto max-h-40",
+            result.ok
+              ? "bg-emerald-50 text-emerald-900 dark:bg-emerald-950 dark:text-emerald-100"
+              : "bg-destructive/10 text-destructive",
+          )}
+        >
+          {result.body}
+        </pre>
+      )}
+    </div>
   );
 }
 
