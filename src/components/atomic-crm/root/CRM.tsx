@@ -37,6 +37,7 @@ import { SettingsPageMobile } from "../settings/SettingsPageMobile";
 import { ProfilePage } from "../settings/ProfilePage";
 import { SettingsPage } from "../settings/SettingsPage";
 import { EmailAccountsPage } from "../settings/EmailAccountsPage";
+import { IntegrationsPage } from "../settings/IntegrationsPage";
 import { EmailInboxPage } from "../emails/EmailInboxPage";
 import {
   CONFIGURATION_STORE_KEY,
@@ -275,6 +276,7 @@ const DesktopAdmin = (
         <Route path={ProfilePage.path} element={<ProfilePage />} />
         <Route path={SettingsPage.path} element={<SettingsPage />} />
         <Route path={EmailAccountsPage.path} element={<EmailAccountsPage />} />
+        <Route path={IntegrationsPage.path} element={<IntegrationsPage />} />
         <Route path={EmailInboxPage.path} element={<EmailInboxPage />} />
         <Route path={ImportPage.path} element={<ImportPage />} />
         <Route path={TasksPage.path} element={<TasksPage />} />
