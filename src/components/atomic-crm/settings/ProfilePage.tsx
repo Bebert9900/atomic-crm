@@ -34,6 +34,7 @@ import {
 import ImageEditorField from "../misc/ImageEditorField";
 import type { CrmDataProvider } from "../providers/types";
 import type { Sale, SalesFormData } from "../types";
+import { GoogleCalendarProfileCard } from "./GoogleCalendarProfileCard";
 
 export const ProfilePage = () => {
   const [isEditMode, setEditMode] = useState(false);
@@ -230,6 +231,7 @@ const ProfileForm = ({
           </div>
         </CardContent>
       </Card>
+      <GoogleCalendarProfileCard />
       {import.meta.env.VITE_INBOUND_EMAIL && (
         <Card>
           <CardContent>

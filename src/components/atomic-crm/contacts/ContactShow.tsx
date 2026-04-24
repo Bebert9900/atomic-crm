@@ -30,6 +30,7 @@ import { ContactPersonalInfo } from "./ContactPersonalInfo";
 import { ContactBackgroundInfo } from "./ContactBackgroundInfo";
 import { ContactEmails } from "./ContactEmails";
 import { ContactTasksList } from "./ContactTasksList";
+import { ContactPostHogActivity } from "./ContactPostHogActivity";
 import type { Contact } from "../types";
 import { Avatar } from "./Avatar";
 import { ContactAside } from "./ContactAside";
@@ -136,7 +137,7 @@ const ContactShowContentMobile = () => {
         </div>
 
         <Tabs defaultValue="notes" className="w-full">
-          <TabsList className="grid w-full grid-cols-4 h-10">
+          <TabsList className="grid w-full grid-cols-5 h-10">
             <TabsTrigger value="notes">
               {translate("resources.notes.name", { smart_count: 2 })}
             </TabsTrigger>
@@ -146,6 +147,7 @@ const ContactShowContentMobile = () => {
                 smart_count: taskCount ?? 0,
               })}
             </TabsTrigger>
+            <TabsTrigger value="product">Produit</TabsTrigger>
             <TabsTrigger value="details">
               {translate("crm.common.details")}
             </TabsTrigger>
@@ -190,6 +192,10 @@ const ContactShowContentMobile = () => {
 
           <TabsContent value="tasks" className="mt-4">
             <ContactTasksList />
+          </TabsContent>
+
+          <TabsContent value="product" className="mt-4">
+            <ContactPostHogActivity />
           </TabsContent>
 
           <TabsContent value="details" className="mt-4">

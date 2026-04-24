@@ -38,6 +38,7 @@ import { ProfilePage } from "../settings/ProfilePage";
 import { SettingsPage } from "../settings/SettingsPage";
 import { EmailAccountsPage } from "../settings/EmailAccountsPage";
 import { IntegrationsPage } from "../settings/IntegrationsPage";
+import { GoogleCalendarCallback } from "../settings/GoogleCalendarCallback";
 import { EmailInboxPage } from "../emails/EmailInboxPage";
 import {
   CONFIGURATION_STORE_KEY,
@@ -273,6 +274,10 @@ const DesktopAdmin = (
       </CustomRoutes>
 
       <CustomRoutes>
+        <Route
+          path={GoogleCalendarCallback.path}
+          element={<GoogleCalendarCallback />}
+        />
         <Route path={ProfilePage.path} element={<ProfilePage />} />
         <Route path={SettingsPage.path} element={<SettingsPage />} />
         <Route path={EmailAccountsPage.path} element={<EmailAccountsPage />} />

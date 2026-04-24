@@ -8,6 +8,9 @@ import {
   Save,
   Check,
   AlertTriangle,
+  ChevronDown,
+  ChevronUp,
+  HelpCircle,
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -37,6 +40,7 @@ type IntegrationDef = {
   subtitle: string;
   icon: React.ComponentType<{ className?: string }>;
   fields: FieldDef[];
+  setupSteps: { title: string; body: string | React.ReactNode }[];
 };
 
 const INTEGRATIONS: IntegrationDef[] = [
@@ -61,6 +65,28 @@ const INTEGRATIONS: IntegrationDef[] = [
         key: "redirect_uri",
         label: "Redirect URI (à copier dans Google Cloud)",
         readOnly: true,
+      },
+    ],
+    setupSteps: [
+      {
+        title: "1. Créer un projet Google Cloud",
+        body: "Aller sur console.cloud.google.com → créer un projet (ou utiliser un existant). Activer la Google Calendar API depuis APIs & Services → Library → chercher 'Google Calendar API' → Enable.",
+      },
+      {
+        title: "2. Configurer l'écran de consentement OAuth",
+        body: "APIs & Services → OAuth consent screen. User Type = External. Renseigner nom d'app (Atomic CRM), email support, logo. Ajouter le scope 'https://www.googleapis.com/auth/calendar'. Ajouter les 3 emails de l'équipe en test users tant que l'app n'est pas vérifiée.",
+      },
+      {
+        title: "3. Créer un OAuth 2.0 Client ID",
+        body: "APIs & Services → Credentials → Create Credentials → OAuth client ID. Type = Web application. Authorized redirect URI = la valeur affichée ci-dessous (Redirect URI).",
+      },
+      {
+        title: "4. Copier Client ID et Client Secret",
+        body: "Après création, copier les 2 valeurs affichées et les coller ci-dessous. Activer le switch Actif.",
+      },
+      {
+        title: "5. Chaque user connecte son Google",
+        body: "Une fois la conf sauvegardée, chacun va sur sa fiche profil (coin bas-gauche → avatar) et clique « Connecter Google Calendar ».",
       },
     ],
   },
@@ -89,6 +115,24 @@ const INTEGRATIONS: IntegrationDef[] = [
           "Créer une clé personnelle avec scopes read events + persons dans PostHog → Settings",
       },
     ],
+    setupSteps: [
+      {
+        title: "1. Récupérer l'URL (Host)",
+        body: "EU → https://eu.i.posthog.com — US → https://us.i.posthog.com — self-hosted → l'URL de ton instance.",
+      },
+      {
+        title: "2. Récupérer le Project ID",
+        body: "PostHog → Settings du projet → l'ID numérique est visible en haut (ex: 12345).",
+      },
+      {
+        title: "3. Créer une Personal API Key",
+        body: "PostHog → Top-right avatar → Personal API keys → Create personal API key. Scopes minimum : Read sur Events + Persons + Session recordings (optionnel). Copier la clé (commence par phx_).",
+      },
+      {
+        title: "4. Coller dans le CRM",
+        body: "Coller les 3 valeurs ci-dessous, activer le switch, enregistrer. Les données apparaîtront dans la fiche de chaque contact (section « Activité produit »), matchées sur l'email.",
+      },
+    ],
   },
   {
     id: "billionmail",
@@ -110,6 +154,16 @@ const INTEGRATIONS: IntegrationDef[] = [
         key: "list_id",
         label: "ID de la liste Fabrik",
         placeholder: "fabrik-list",
+      },
+    ],
+    setupSteps: [
+      {
+        title: "⚠️ En attente de l'API BillionMail",
+        body: "L'API BillionMail n'est pas standardisée. Fournir à l'équipe dev : l'endpoint de création d'abonné, le format du body JSON attendu, et l'en-tête d'auth (Bearer, X-API-Key, etc). Une fois ces infos connues on branchera un trigger Postgres qui pousse chaque contact créé/modifié vers la liste Fabrik.",
+      },
+      {
+        title: "En attendant",
+        body: "Tu peux déjà saisir les champs ci-dessous, ils seront utilisés quand la couche d'intégration sera écrite.",
       },
     ],
   },
@@ -224,6 +278,7 @@ function IntegrationCard({
   const Icon = def.icon;
   const [enabled, setEnabled] = useState(row?.enabled ?? false);
   const [saving, setSaving] = useState(false);
+  const [helpOpen, setHelpOpen] = useState(false);
   const [values, setValues] = useState<Record<string, string>>(() =>
     emptyValues(def, row),
   );
@@ -305,6 +360,34 @@ function IntegrationCard({
               onCheckedChange={setEnabled}
             />
           </div>
+        </div>
+
+        <div className="rounded-md border border-dashed border-border bg-muted/30">
+          <button
+            type="button"
+            onClick={() => setHelpOpen((v) => !v)}
+            className="w-full flex items-center justify-between gap-2 px-3 py-2 text-xs font-medium"
+          >
+            <span className="flex items-center gap-1.5">
+              <HelpCircle className="h-3.5 w-3.5" />
+              Comment obtenir les clés
+            </span>
+            {helpOpen ? (
+              <ChevronUp className="h-3.5 w-3.5" />
+            ) : (
+              <ChevronDown className="h-3.5 w-3.5" />
+            )}
+          </button>
+          {helpOpen && (
+            <ol className="px-4 pb-3 pt-1 flex flex-col gap-2">
+              {def.setupSteps.map((step, idx) => (
+                <li key={idx} className="text-xs">
+                  <p className="font-medium">{step.title}</p>
+                  <p className="text-muted-foreground">{step.body}</p>
+                </li>
+              ))}
+            </ol>
+          )}
         </div>
 
         <div className="flex flex-col gap-3">
