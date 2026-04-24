@@ -176,3 +176,7 @@ verify_jwt = false
 verify_jwt = false
 [functions.sync_saas_user]
 verify_jwt = false
+[functions.sync_saas_signup]
+verify_jwt = false
+[functions.send_email_raw]
+verify_jwt = false
