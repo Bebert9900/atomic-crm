@@ -16,6 +16,7 @@ import { DevTaskEdit } from "./DevTaskEdit";
 import { DevTaskEmpty } from "./DevTaskEmpty";
 import { DevTaskListContent } from "./DevTaskListContent";
 import { DevTaskShow } from "./DevTaskShow";
+import { OnlyMineDevTaskInput } from "./OnlyMineDevTaskInput";
 
 const DevTaskList = () => {
   const { identity } = useGetIdentity();
@@ -37,7 +38,7 @@ const DevTaskList = () => {
       optionText="label"
       optionValue="value"
     />,
-    <ReferenceInput source="assignee_ids@cs" reference="sales">
+    <ReferenceInput source="assignee_ids@cs" reference="sales" alwaysOn>
       <AutocompleteInput
         optionText={(s) => `${s.first_name} ${s.last_name}`}
         label="Assigné à"
@@ -47,6 +48,7 @@ const DevTaskList = () => {
         }
       />
     </ReferenceInput>,
+    <OnlyMineDevTaskInput source="assignee_ids@cs" alwaysOn />,
   ];
 
   return (
