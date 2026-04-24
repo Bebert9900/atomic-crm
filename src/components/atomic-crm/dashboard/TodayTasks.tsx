@@ -12,10 +12,12 @@ import { fr } from "date-fns/locale";
 import { Sparkles } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { cn } from "@/lib/utils";
 
 import type { DevTask, Task } from "../types";
+import { MarkDoneDialog } from "../misc/MarkDoneDialog";
 
 export const TodayTasks = () => {
   const translate = useTranslate();
