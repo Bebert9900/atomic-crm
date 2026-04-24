@@ -2,7 +2,6 @@ import { useEffect, useMemo, useState } from "react";
 import { useGetIdentity, useNotify } from "ra-core";
 import { useNavigate } from "react-router";
 import {
-  Calendar,
   BarChart3,
   Send,
   Save,
@@ -23,7 +22,7 @@ import { Badge } from "@/components/ui/badge";
 import { PageHeader } from "../layout/PageHeader";
 import { getSupabaseClient } from "../providers/supabase/supabase";
 
-type IntegrationId = "google_calendar" | "posthog" | "billionmail";
+type IntegrationId = "posthog" | "billionmail";
 
 type FieldDef = {
   key: string;
@@ -44,52 +43,6 @@ type IntegrationDef = {
 };
 
 const INTEGRATIONS: IntegrationDef[] = [
-  {
-    id: "google_calendar",
-    title: "Google Calendar",
-    subtitle: "Sync 2-way entre les RDV du CRM et Google Calendar",
-    icon: Calendar,
-    fields: [
-      {
-        key: "client_id",
-        label: "OAuth Client ID",
-        placeholder: "xxxxxx.apps.googleusercontent.com",
-      },
-      {
-        key: "client_secret",
-        label: "OAuth Client Secret",
-        secret: true,
-        placeholder: "GOCSPX-...",
-      },
-      {
-        key: "redirect_uri",
-        label: "Redirect URI (à copier dans Google Cloud)",
-        readOnly: true,
-      },
-    ],
-    setupSteps: [
-      {
-        title: "1. Créer un projet Google Cloud",
-        body: "Aller sur console.cloud.google.com → créer un projet (ou utiliser un existant). Activer la Google Calendar API depuis APIs & Services → Library → chercher 'Google Calendar API' → Enable.",
-      },
-      {
-        title: "2. Configurer l'écran de consentement OAuth",
-        body: "APIs & Services → OAuth consent screen. User Type = External. Renseigner nom d'app (Atomic CRM), email support, logo. Ajouter le scope 'https://www.googleapis.com/auth/calendar'. Ajouter les 3 emails de l'équipe en test users tant que l'app n'est pas vérifiée.",
-      },
-      {
-        title: "3. Créer un OAuth 2.0 Client ID",
-        body: "APIs & Services → Credentials → Create Credentials → OAuth client ID. Type = Web application. Authorized redirect URI = la valeur affichée ci-dessous (Redirect URI).",
-      },
-      {
-        title: "4. Copier Client ID et Client Secret",
-        body: "Après création, copier les 2 valeurs affichées et les coller ci-dessous. Activer le switch Actif.",
-      },
-      {
-        title: "5. Chaque user connecte son Google",
-        body: "Une fois la conf sauvegardée, chacun va sur sa fiche profil (coin bas-gauche → avatar) et clique « Connecter Google Calendar ».",
-      },
-    ],
-  },
   {
     id: "posthog",
     title: "PostHog",
@@ -473,13 +426,6 @@ function isConfigured(
   return true;
 }
 
-function getReadOnlyValue(id: IntegrationId, key: string): string {
-  if (id === "google_calendar" && key === "redirect_uri") {
-    // Must match the callback route wired by the edge function (to be created)
-    if (typeof window !== "undefined") {
-      return `${window.location.origin}/auth/google/callback`;
-    }
-    return "/auth/google/callback";
-  }
+function getReadOnlyValue(_id: IntegrationId, _key: string): string {
   return "";
 }

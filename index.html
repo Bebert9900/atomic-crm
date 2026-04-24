@@ -135,24 +135,6 @@
         }
       }
     </style>
-    <script>
-      // OAuth redirect-URI bridge: the app uses a HashRouter, but external
-      // providers (Google, etc.) cannot include a fragment in a redirect URI
-      // during the authorization_code flow. When we land on a path like
-      // /auth/google/callback?... we forward to /#/auth/google/callback?... so
-      // React Router picks it up.
-      (function () {
-        var p = window.location.pathname;
-        if (
-          p.indexOf("/auth/") === 0 &&
-          window.location.hash.indexOf("#/") !== 0
-        ) {
-          window.location.replace(
-            window.location.origin + "/#" + p + window.location.search,
-          );
-        }
-      })();
-    </script>
   </head>
   <body>
     <div id="root">
