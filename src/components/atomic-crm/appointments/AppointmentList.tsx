@@ -459,9 +459,11 @@ export const AppointmentList = () => {
           isDarkMode && "is-dark",
         )}
       >
-        {/* Custom create button overlaid on calendar toolbar */}
-        <div className="relative">
-          <div className="absolute right-3 top-2.5 z-20">
+        {/* Custom create button overlaid on calendar toolbar.
+            The toolbar is ~72px tall (Schedule-X uses 48px round chevron
+            buttons + padding), so align vertically with the toolbar row. */}
+        <div className="pointer-events-none relative h-0">
+          <div className="pointer-events-auto absolute right-3 top-4 z-20">
             <button
               type="button"
               onClick={handleCreateClick}
