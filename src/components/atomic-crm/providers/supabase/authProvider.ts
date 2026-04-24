@@ -54,27 +54,36 @@ export async function getIsInitialized() {
 
 const getSale = async () => {
   const storage = getLocalStorage();
-  const cachedValue = storage?.getItem(CURRENT_SALE_CACHE_KEY);
-  if (cachedValue != null) {
-    return JSON.parse(cachedValue);
-  }
 
   const { data: dataSession, error: errorSession } =
     await getSupabaseClient().auth.getSession();
 
-  // Shouldn't happen after login but just in case
   if (dataSession?.session?.user == null || errorSession) {
     return undefined;
+  }
+  const authUserId = dataSession.session.user.id;
+
+  // Use cache only if it still matches the current auth user. Prevents stale
+  // identity after sales-row merges / user_id rebinds (otherwise the UI keeps
+  // sending a non-existent sales_id and FK-constrained writes fail).
+  const cachedValue = storage?.getItem(CURRENT_SALE_CACHE_KEY);
+  if (cachedValue != null) {
+    try {
+      const cached = JSON.parse(cachedValue);
+      if (cached?.user_id === authUserId) return cached;
+    } catch {
+      /* fall through to refresh */
+    }
   }
 
   const { data: dataSale, error: errorSale } = await getSupabaseClient()
     .from("sales")
-    .select("id, first_name, last_name, avatar, administrator")
-    .match({ user_id: dataSession?.session?.user.id })
+    .select("id, first_name, last_name, avatar, administrator, user_id")
+    .match({ user_id: authUserId })
     .single();
 
-  // Shouldn't happen either as all users are sales but just in case
   if (dataSale == null || errorSale) {
+    storage?.removeItem(CURRENT_SALE_CACHE_KEY);
     return undefined;
   }
 
