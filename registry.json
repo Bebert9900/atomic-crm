@@ -174,10 +174,6 @@
           "type": "registry:component"
         },
         {
-          "path": "src/components/atomic-crm/settings/GoogleCalendarCallback.tsx",
-          "type": "registry:component"
-        },
-        {
           "path": "src/components/atomic-crm/settings/EmailAccountsPage.tsx",
           "type": "registry:component"
         },

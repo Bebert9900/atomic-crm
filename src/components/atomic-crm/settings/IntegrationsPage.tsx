@@ -10,6 +10,8 @@ import {
   ChevronDown,
   ChevronUp,
   HelpCircle,
+  Calendar,
+  ArrowRight,
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -193,6 +195,33 @@ export const IntegrationsPage = () => {
         <p className="text-sm text-muted-foreground p-4">Chargement…</p>
       ) : (
         <div className="flex flex-col gap-4 max-w-2xl">
+          {/* Pointer: Google Calendar is handled per-user via Supabase linkIdentity */}
+          <Card className="border-dashed">
+            <CardContent className="pt-5 flex items-start gap-3">
+              <div className="p-2 rounded-md bg-muted">
+                <Calendar className="h-5 w-5" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-base font-semibold">Google Calendar</p>
+                <p className="text-xs text-muted-foreground">
+                  L'intégration Google est maintenant gérée par utilisateur. Va
+                  sur ta <strong>fiche profil</strong> (sidebar bas-gauche →
+                  avatar) pour lier ton propre compte Google. Les prérequis
+                  admin (Google Cloud + Supabase Dashboard) sont détaillés dans
+                  la carte Google Calendar du profil.
+                </p>
+              </div>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => navigate("/profile")}
+                className="shrink-0"
+              >
+                Ouvrir mon profil <ArrowRight className="h-4 w-4 ml-1" />
+              </Button>
+            </CardContent>
+          </Card>
+
           {INTEGRATIONS.map((def) => (
             <IntegrationCard
               key={def.id}
