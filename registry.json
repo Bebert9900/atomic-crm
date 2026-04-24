@@ -650,6 +650,10 @@
           "type": "registry:component"
         },
         {
+          "path": "src/components/atomic-crm/dev-tasks/OnlyMineDevTaskInput.tsx",
+          "type": "registry:component"
+        },
+        {
           "path": "src/components/atomic-crm/dev-tasks/LabelPill.tsx",
           "type": "registry:component"
         },

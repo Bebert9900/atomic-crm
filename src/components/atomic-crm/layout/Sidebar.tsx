@@ -9,6 +9,7 @@ import {
   Sparkles,
   Sun,
   Users,
+  UserCog,
 } from "lucide-react";
 import { EmailInboxPage } from "../emails/EmailInboxPage";
 import { CanAccess, useGetIdentity, useGetList, useTranslate } from "ra-core";
@@ -142,6 +143,18 @@ export const Sidebar = () => {
           label="Dev"
           isActive={currentPath === "/dev_tasks"}
         />
+        {(identity as unknown as { administrator?: boolean })
+          ?.administrator && (
+          <NavItem
+            to="/sales"
+            icon={UserCog}
+            label="Utilisateurs"
+            isActive={
+              typeof currentPath === "string" &&
+              currentPath.startsWith("/sales")
+            }
+          />
+        )}
       </nav>
 
       {/* Bottom: user profile + settings */}
@@ -274,5 +287,7 @@ function getCurrentPath(pathname: string): string | false {
   if (matchPath("/appointments/*", pathname)) return "/appointments";
   if (matchPath("/tasks/*", pathname)) return "/tasks";
   if (matchPath("/settings/*", pathname)) return "/settings";
+  if (matchPath("/sales/*", pathname)) return "/sales";
+  if (matchPath("/dev_tasks/*", pathname)) return "/dev_tasks";
   return false;
 }
