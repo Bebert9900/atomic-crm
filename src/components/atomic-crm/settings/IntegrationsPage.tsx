@@ -12,6 +12,7 @@ import {
   HelpCircle,
   Calendar,
   ArrowRight,
+  CreditCard,
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -25,7 +26,7 @@ import { cn } from "@/lib/utils";
 import { PageHeader } from "../layout/PageHeader";
 import { getSupabaseClient } from "../providers/supabase/supabase";
 
-type IntegrationId = "posthog" | "billionmail";
+type IntegrationId = "posthog" | "billionmail" | "stripe";
 
 type FieldDef = {
   key: string;
@@ -164,6 +165,53 @@ const INTEGRATIONS: IntegrationDef[] = [
       {
         title: "7. Tester la connexion",
         body: "Remplir tous les champs, activer Actif, enregistrer. Puis utiliser le bouton « Tester avec un contact » (affiché sous la carte une fois les champs remplis) pour pousser un faux contact vers la liste. Si ça renvoie success, on peut brancher la sync auto.",
+      },
+    ],
+  },
+  {
+    id: "stripe",
+    title: "Stripe",
+    subtitle:
+      "Trésorerie en temps réel + revenus / abonnements dans la page Affaires",
+    icon: CreditCard,
+    fields: [
+      {
+        key: "secret_key",
+        label: "Secret Key",
+        secret: true,
+        placeholder: "sk_live_... ou sk_test_...",
+        helpText:
+          "Stripe Dashboard → Developers → API keys → Secret key. Restricted key OK si scopes : balance read, payouts read, customers read, invoices read, charges read, subscriptions read.",
+      },
+      {
+        key: "webhook_secret",
+        label: "Webhook Signing Secret",
+        secret: true,
+        placeholder: "whsec_...",
+        helpText:
+          "Affiché une seule fois à la création du webhook (étape 2 ci-dessous). Si perdu, recréer un webhook.",
+      },
+    ],
+    setupSteps: [
+      {
+        title: "1. Récupérer la Secret Key",
+        body: "Stripe Dashboard → Developers → API keys → copier la Secret key (commence par sk_live_ en prod, sk_test_ en test). Idéalement créer une Restricted Key avec scopes en lecture seule + webhook signing : Balance, Charges, Customers, Invoices, Payouts, Subscriptions, Webhook Endpoints.",
+      },
+      {
+        title: "2. Créer le webhook",
+        body: "Stripe Dashboard → Developers → Webhooks → Add endpoint → coller l'URL : https://luibovhuvqnznucfwvym.functions.supabase.co/stripe-webhook → événements à écouter : invoice.paid, invoice.payment_failed, charge.succeeded, charge.refunded, charge.failed, payment_intent.succeeded, payment_intent.payment_failed, customer.subscription.created, customer.subscription.updated, customer.subscription.deleted, payout.created, payout.paid, payout.failed, payout.canceled. Une fois créé, cliquer « Reveal » à côté de Signing secret et copier la valeur (whsec_...).",
+      },
+      {
+        title: "3. Coller dans le CRM",
+        body: "Coller Secret Key + Webhook Signing Secret ci-dessous, activer le switch Actif, enregistrer.",
+      },
+      {
+        title: "4. Tester la connexion",
+        body: "Une fois enregistré et activé, le bouton « Tester la connexion » apparaît sous la carte. Il appelle Stripe pour récupérer la balance — si ça affiche un solde, c'est branché. La trésorerie apparaîtra ensuite dans la page Affaires + un widget sur le dashboard.",
+      },
+      {
+        title: "5. Lier des companies à des Stripe customers (optionnel)",
+        body: "Sur la fiche d'une company CRM, coller son ID Stripe (cus_xxx) dans le champ « Stripe customer ID ». Tous les paiements et abonnements de ce customer seront alors visibles dans la fiche. Le webhook fait aussi un fallback automatique par email du contact lié.",
       },
     ],
   },
@@ -468,8 +516,105 @@ function IntegrationCard({
         {def.id === "billionmail" && configured && enabled && (
           <BillionMailTestBlock />
         )}
+        {def.id === "stripe" && configured && enabled && <StripeTestBlock />}
       </CardContent>
     </Card>
+  );
+}
+
+function StripeTestBlock() {
+  const notify = useNotify();
+  const [running, setRunning] = useState(false);
+  const [result, setResult] = useState<null | {
+    ok: boolean;
+    body: string;
+    summary?: string;
+  }>(null);
+
+  const run = async () => {
+    setRunning(true);
+    setResult(null);
+    const { data, error } = await getSupabaseClient().functions.invoke(
+      "get_stripe_treasury",
+      { body: {} },
+    );
+    if (error) {
+      setResult({ ok: false, body: error.message });
+      notify(`Erreur Stripe: ${error.message}`, { type: "error" });
+      setRunning(false);
+      return;
+    }
+    const resp = data as {
+      ok?: boolean;
+      configured?: boolean;
+      enabled?: boolean;
+      balance?: {
+        available?: Record<string, number>;
+        pending?: Record<string, number>;
+      };
+      message?: string;
+    };
+    let summary = "";
+    if (resp.ok && resp.balance) {
+      const avail = resp.balance.available ?? {};
+      const pend = resp.balance.pending ?? {};
+      const fmt = (cents: number, ccy: string) =>
+        `${(cents / 100).toLocaleString("fr-FR", { minimumFractionDigits: 2 })} ${ccy.toUpperCase()}`;
+      const availStr =
+        Object.entries(avail)
+          .map(([ccy, c]) => fmt(c as number, ccy))
+          .join(", ") || "0";
+      const pendStr =
+        Object.entries(pend)
+          .map(([ccy, c]) => fmt(c as number, ccy))
+          .join(", ") || "0";
+      summary = `Disponible: ${availStr} • En attente: ${pendStr}`;
+    }
+    setResult({
+      ok: !!resp.ok,
+      body: JSON.stringify(resp, null, 2),
+      summary: summary || resp.message,
+    });
+    setRunning(false);
+  };
+
+  return (
+    <div className="rounded-md border border-border bg-muted/20 p-3 flex flex-col gap-2">
+      <p className="text-xs font-medium">Tester la connexion</p>
+      <p className="text-[11px] text-muted-foreground">
+        Appelle Stripe pour récupérer la balance live. Confirme que la secret
+        key marche et donne un aperçu de la trésorerie actuelle.
+      </p>
+      <div className="flex items-center gap-2">
+        <Button size="sm" variant="secondary" onClick={run} disabled={running}>
+          {running ? "Appel Stripe…" : "Tester"}
+        </Button>
+        {result?.summary && (
+          <span
+            className={cn(
+              "text-xs",
+              result.ok
+                ? "text-emerald-700 dark:text-emerald-300"
+                : "text-destructive",
+            )}
+          >
+            {result.summary}
+          </span>
+        )}
+      </div>
+      {result && (
+        <pre
+          className={cn(
+            "text-[11px] p-2 rounded-md overflow-auto max-h-40",
+            result.ok
+              ? "bg-emerald-50 text-emerald-900 dark:bg-emerald-950 dark:text-emerald-100"
+              : "bg-destructive/10 text-destructive",
+          )}
+        >
+          {result.body}
+        </pre>
+      )}
+    </div>
   );
 }
 

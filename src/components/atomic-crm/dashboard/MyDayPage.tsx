@@ -17,6 +17,7 @@ import { useState } from "react";
 import { CheckCircle2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { MarkDoneDialog, type MarkDoneKind } from "../misc/MarkDoneDialog";
+import { TreasuryWidget } from "../finance/TreasuryWidget";
 import type { Appointment, Contact, Deal, DevTask, Task } from "../types";
 
 function sectionTitle(icon: React.ReactNode, label: string) {
@@ -482,6 +483,7 @@ export const MyDayPage = () => {
       </div>
 
       <div className="space-y-4">
+        <TreasuryWidget />
         <StaleDealsCard deals={deals ?? []} />
         <FollowUpContactsCard contacts={contacts ?? []} />
       </div>

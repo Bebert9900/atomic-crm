@@ -2,19 +2,32 @@ import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import Stripe from "stripe";
 import { supabaseAdmin } from "../_shared/supabaseAdmin.ts";
 
-const STRIPE_SECRET_KEY = Deno.env.get("STRIPE_SECRET_KEY");
-const STRIPE_WEBHOOK_SECRET = Deno.env.get("STRIPE_WEBHOOK_SECRET");
+/**
+ * Reads Stripe credentials from `crm_integrations` row id='stripe'.
+ * Pattern aligned with PostHog/BillionMail integrations: admins paste the
+ * keys in the CRM Settings → Intégrations page; no env var to provision.
+ */
+type StripeConfig = {
+  enabled: boolean;
+  secret_key: string;
+  webhook_secret: string;
+};
 
-if (!STRIPE_SECRET_KEY || !STRIPE_WEBHOOK_SECRET) {
-  throw new Error(
-    "Missing STRIPE_SECRET_KEY or STRIPE_WEBHOOK_SECRET env variable",
-  );
+async function getStripeConfig(): Promise<StripeConfig | null> {
+  const { data, error } = await supabaseAdmin
+    .from("crm_integrations")
+    .select("*")
+    .eq("id", "stripe")
+    .single();
+  if (error || !data) return null;
+  const cfg = (data.config ?? {}) as Record<string, string>;
+  if (!cfg.secret_key || !cfg.webhook_secret) return null;
+  return {
+    enabled: !!data.enabled,
+    secret_key: cfg.secret_key,
+    webhook_secret: cfg.webhook_secret,
+  };
 }
-
-const stripe = new Stripe(STRIPE_SECRET_KEY, {
-  apiVersion: "2024-12-18.acacia" as Stripe.LatestApiVersion,
-  httpClient: Stripe.createFetchHttpClient(),
-});
 
 const cryptoProvider = Stripe.createSubtleCryptoProvider();
 
@@ -50,6 +63,7 @@ async function resolveContactByEmail(
 }
 
 async function fetchCustomerEmail(
+  stripe: Stripe,
   stripeCustomerId: string | null,
 ): Promise<string | null> {
   if (!stripeCustomerId) return null;
@@ -64,29 +78,24 @@ async function fetchCustomerEmail(
 }
 
 async function resolveLink(
+  stripe: Stripe,
   stripeCustomerId: string | null,
   directEmail: string | null,
 ): Promise<Resolved> {
-  // 1. Fast path: company already linked by stripe_customer_id
   const companyFromCustomer =
     await resolveCompanyIdByStripeCustomer(stripeCustomerId);
 
-  // 2. Try to find a contact matching the event's email
-  //    (directEmail is invoice.customer_email / receipt_email / etc.)
   let email = directEmail?.toLowerCase() ?? null;
   let contact = await resolveContactByEmail(email);
 
-  // 3. Fallback: ask Stripe for the customer's email
   if (!contact && stripeCustomerId) {
-    email = await fetchCustomerEmail(stripeCustomerId);
+    email = await fetchCustomerEmail(stripe, stripeCustomerId);
     contact = await resolveContactByEmail(email);
   }
 
   const companyId = companyFromCustomer ?? contact?.company_id ?? null;
   const contactId = contact?.id ?? null;
 
-  // 4. Backfill companies.stripe_customer_id the first time we resolve it
-  //    via email — next events will take the fast path.
   if (stripeCustomerId && !companyFromCustomer && contact?.company_id != null) {
     await supabaseAdmin
       .from("companies")
@@ -104,10 +113,10 @@ async function upsertPayment(row: Record<string, unknown>) {
     .upsert(row, { onConflict: "stripe_event_id" });
 }
 
-async function upsertSubscription(sub: Stripe.Subscription) {
+async function upsertSubscription(stripe: Stripe, sub: Stripe.Subscription) {
   const customerId =
     typeof sub.customer === "string" ? sub.customer : sub.customer.id;
-  const { companyId } = await resolveLink(customerId, null);
+  const { companyId } = await resolveLink(stripe, customerId, null);
   const item = sub.items.data[0];
   const price = item?.price;
   const productName =
@@ -144,7 +153,30 @@ async function upsertSubscription(sub: Stripe.Subscription) {
   );
 }
 
-async function handleEvent(event: Stripe.Event) {
+async function upsertPayout(eventId: string, payout: Stripe.Payout) {
+  return supabaseAdmin.from("stripe_payouts").upsert(
+    {
+      stripe_payout_id: payout.id,
+      stripe_event_id: eventId,
+      amount: payout.amount,
+      currency: payout.currency,
+      status: payout.status,
+      arrival_date: payout.arrival_date
+        ? new Date(payout.arrival_date * 1000).toISOString()
+        : null,
+      description: payout.description ?? null,
+      failure_code: payout.failure_code ?? null,
+      failure_message: payout.failure_message ?? null,
+      method: payout.method ?? null,
+      type: payout.type ?? null,
+      metadata: payout.metadata ?? {},
+      occurred_at: new Date().toISOString(),
+    },
+    { onConflict: "stripe_event_id" },
+  );
+}
+
+async function handleEvent(stripe: Stripe, event: Stripe.Event) {
   const eventId = event.id;
   const occurredAt = new Date(event.created * 1000).toISOString();
 
@@ -158,6 +190,7 @@ async function handleEvent(event: Stripe.Event) {
           ? inv.customer
           : (inv.customer?.id ?? null);
       const { companyId, contactId } = await resolveLink(
+        stripe,
         customerId,
         inv.customer_email ?? null,
       );
@@ -194,6 +227,7 @@ async function handleEvent(event: Stripe.Event) {
           : (ch.customer?.id ?? null);
       const chargeEmail = ch.receipt_email ?? ch.billing_details?.email ?? null;
       const { companyId, contactId } = await resolveLink(
+        stripe,
         customerId,
         chargeEmail,
       );
@@ -228,7 +262,11 @@ async function handleEvent(event: Stripe.Event) {
           ? pi.customer
           : (pi.customer?.id ?? null);
       const piEmail = pi.receipt_email ?? null;
-      const { companyId, contactId } = await resolveLink(customerId, piEmail);
+      const { companyId, contactId } = await resolveLink(
+        stripe,
+        customerId,
+        piEmail,
+      );
       await upsertPayment({
         stripe_event_id: eventId,
         stripe_object_id: pi.id,
@@ -253,7 +291,17 @@ async function handleEvent(event: Stripe.Event) {
     case "customer.subscription.updated":
     case "customer.subscription.deleted": {
       const sub = event.data.object as Stripe.Subscription;
-      await upsertSubscription(sub);
+      await upsertSubscription(stripe, sub);
+      break;
+    }
+
+    case "payout.created":
+    case "payout.paid":
+    case "payout.failed":
+    case "payout.canceled":
+    case "payout.updated": {
+      const payout = event.data.object as Stripe.Payout;
+      await upsertPayout(eventId, payout);
       break;
     }
 
@@ -268,6 +316,22 @@ Deno.serve(async (req) => {
     return new Response("Method not allowed", { status: 405 });
   }
 
+  const cfg = await getStripeConfig();
+  if (!cfg) {
+    return new Response(
+      "Stripe integration is not configured. Set keys in CRM Settings → Intégrations.",
+      { status: 503 },
+    );
+  }
+  if (!cfg.enabled) {
+    return new Response("Stripe integration is disabled.", { status: 503 });
+  }
+
+  const stripe = new Stripe(cfg.secret_key, {
+    apiVersion: "2024-12-18.acacia" as Stripe.LatestApiVersion,
+    httpClient: Stripe.createFetchHttpClient(),
+  });
+
   const signature = req.headers.get("stripe-signature");
   if (!signature) {
     return new Response("Missing stripe-signature header", { status: 400 });
@@ -280,7 +344,7 @@ Deno.serve(async (req) => {
     event = await stripe.webhooks.constructEventAsync(
       rawBody,
       signature,
-      STRIPE_WEBHOOK_SECRET,
+      cfg.webhook_secret,
       undefined,
       cryptoProvider,
     );
@@ -292,7 +356,7 @@ Deno.serve(async (req) => {
   }
 
   try {
-    await handleEvent(event);
+    await handleEvent(stripe, event);
     return new Response(JSON.stringify({ received: true }), {
       status: 200,
       headers: { "Content-Type": "application/json" },

@@ -14,6 +14,7 @@ import { SelectInput } from "@/components/admin/select-input";
 import { useConfigurationContext } from "../root/ConfigurationContext";
 import { PageHeader } from "../layout/PageHeader";
 import { TopToolbar } from "../layout/TopToolbar";
+import { TreasuryBanner } from "../finance/TreasuryBanner";
 import { DealArchivedList } from "./DealArchivedList";
 import { DealCreate } from "./DealCreate";
 import { DealEdit } from "./DealEdit";
@@ -80,6 +81,7 @@ const DealLayout = () => {
   if (!data?.length && !hasFilters)
     return (
       <>
+        <TreasuryBanner />
         <DealEmpty>
           <DealShow open={!!matchShow} id={matchShow?.params.id} />
           <DealArchivedList />
@@ -93,6 +95,7 @@ const DealLayout = () => {
         title={translate("resources.deals.name", { smart_count: 2 })}
         subtitle={`${total ?? 0} ${translate("resources.deals.name", { smart_count: total ?? 2 }).toLowerCase()}`}
       />
+      <TreasuryBanner />
       <div className="w-full">
         <DealListContent />
         <DealArchivedList />

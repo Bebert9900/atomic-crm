@@ -5,6 +5,8 @@ import {
   ExternalLink,
   RefreshCcw,
   XCircle,
+  Wallet,
+  Repeat,
 } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
@@ -101,8 +103,77 @@ export const CompanyPayments = ({ companyId }: { companyId: number }) => {
     );
   }
 
+  // KPIs: lifetime value (sum of successful charges/invoices net of refunds) +
+  // contribution MRR from active subscriptions.
+  const ltvByCcy: Record<string, number> = {};
+  for (const p of payments ?? []) {
+    if (
+      p.type.includes("succeeded") ||
+      p.type === "invoice_paid" ||
+      p.type === "charge_succeeded" ||
+      p.type === "charge_refunded"
+    ) {
+      const net = (p.amount ?? 0) - (p.amount_refunded ?? 0);
+      ltvByCcy[p.currency] = (ltvByCcy[p.currency] ?? 0) + net;
+    }
+  }
+  const mrrByCcy: Record<string, number> = {};
+  for (const sub of subscriptions ?? []) {
+    if (
+      (sub.status === "active" || sub.status === "trialing") &&
+      sub.amount != null
+    ) {
+      const ccy = sub.currency ?? "eur";
+      const interval = sub.recurring_interval;
+      const monthly =
+        interval === "year"
+          ? Math.round(sub.amount / 12)
+          : interval === "week"
+            ? sub.amount * 4
+            : interval === "day"
+              ? sub.amount * 30
+              : sub.amount;
+      mrrByCcy[ccy] = (mrrByCcy[ccy] ?? 0) + monthly;
+    }
+  }
+
+  const fmtByCcy = (byCcy: Record<string, number>) => {
+    const entries = Object.entries(byCcy);
+    if (entries.length === 0) return null;
+    return entries.map(([ccy, c]) => formatAmount(c, ccy)).join(" + ");
+  };
+
+  const ltvLabel = fmtByCcy(ltvByCcy);
+  const mrrLabel = fmtByCcy(mrrByCcy);
+
   return (
     <div className="flex flex-col gap-5 pt-2">
+      {(ltvLabel || mrrLabel) && (
+        <section className="flex flex-wrap gap-2">
+          {ltvLabel && (
+            <div className="flex flex-col gap-1 px-3 py-2 rounded-md border bg-card min-w-[140px]">
+              <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                <Wallet className="h-3.5 w-3.5" />
+                Lifetime value
+              </div>
+              <div className="text-base font-semibold tabular-nums">
+                {ltvLabel}
+              </div>
+            </div>
+          )}
+          {mrrLabel && (
+            <div className="flex flex-col gap-1 px-3 py-2 rounded-md border bg-card min-w-[140px]">
+              <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                <Repeat className="h-3.5 w-3.5" />
+                MRR contribué
+              </div>
+              <div className="text-base font-semibold tabular-nums">
+                {mrrLabel}
+              </div>
+            </div>
+          )}
+        </section>
+      )}
       {hasSubs && (
         <section>
           <h6 className="mb-2 text-sm font-semibold">Abonnements</h6>

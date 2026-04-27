@@ -425,3 +425,66 @@ export type Subscription = {
   updated_at: string;
   created_at: string;
 } & Pick<RaRecord, "id">;
+
+export type StripePayout = {
+  stripe_payout_id: string;
+  stripe_event_id: string;
+  amount: number;
+  currency: string;
+  status: string;
+  arrival_date: string | null;
+  description: string | null;
+  failure_code: string | null;
+  failure_message: string | null;
+  method: string | null;
+  type: string | null;
+  metadata: Record<string, unknown>;
+  occurred_at: string;
+  created_at: string;
+} & Pick<RaRecord, "id">;
+
+export type FinanceMetrics = {
+  active_subscriptions: number;
+  mrr_cents: number;
+  arr_cents: number;
+  revenue_30d_cents: number;
+  refunded_30d_cents: number;
+  payments_30d_count: number;
+  churned_30d_count: number;
+  currency: string;
+  computed_at: string;
+} & Pick<RaRecord, "id">;
+
+export type StripeTreasury = {
+  ok: boolean;
+  configured: boolean;
+  enabled?: boolean;
+  has_webhook_secret?: boolean;
+  message?: string;
+  balance?: {
+    available: Record<string, number>;
+    pending: Record<string, number>;
+    in_transit: Record<string, number>;
+  };
+  next_payout?: {
+    id: string;
+    amount: number;
+    currency: string;
+    status: string;
+    arrival_date: string | null;
+    method: string | null;
+    description: string | null;
+    failure_message: string | null;
+  } | null;
+  recent_payouts?: Array<{
+    id: string;
+    amount: number;
+    currency: string;
+    status: string;
+    arrival_date: string | null;
+    method: string | null;
+    description: string | null;
+    failure_message: string | null;
+  }>;
+  retrieved_at?: string;
+};
