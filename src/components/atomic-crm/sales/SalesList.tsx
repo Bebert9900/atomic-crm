@@ -8,8 +8,9 @@ import { SearchInput } from "@/components/admin/search-input";
 import { Badge } from "@/components/ui/badge";
 
 import { TopToolbar } from "../layout/TopToolbar";
-import type { Sale, Task } from "../types";
+import type { DevTask, Sale, Task } from "../types";
 import {
+  buildSaleDevTaskProductivityMap,
   buildSaleTaskProductivityMap,
   emptySaleTaskProductivity,
   type SaleTaskProductivity,
@@ -50,29 +51,19 @@ const OptionsField = (_props: { label?: string | boolean }) => {
   );
 };
 
-const TaskPerformanceField = ({
-  metricsBySale,
-  isPending,
+const MetricsRow = ({
+  label,
+  metrics,
 }: {
-  metricsBySale: Map<Sale["id"], SaleTaskProductivity>;
-  isPending: boolean;
+  label: string;
+  metrics: SaleTaskProductivity;
 }) => {
-  const record = useRecordContext<Sale>();
   const translate = useTranslate();
-
-  if (!record) return null;
-  if (isPending) {
-    return (
-      <span className="text-sm text-muted-foreground">
-        {translate("crm.common.loading")}
-      </span>
-    );
-  }
-
-  const metrics = metricsBySale.get(record.id) ?? emptySaleTaskProductivity;
-
   return (
     <div className="flex flex-wrap items-center gap-1.5">
+      <span className="text-xs font-medium text-muted-foreground min-w-16">
+        {label}
+      </span>
       <Badge variant="outline">
         {translate("resources.sales.fields.assigned_tasks")}: {metrics.assigned}
       </Badge>
@@ -105,15 +96,68 @@ const TaskPerformanceField = ({
   );
 };
 
+const TaskPerformanceField = ({
+  contactMetricsBySale,
+  devMetricsBySale,
+  isPending,
+}: {
+  contactMetricsBySale: Map<Sale["id"], SaleTaskProductivity>;
+  devMetricsBySale: Map<Sale["id"], SaleTaskProductivity>;
+  isPending: boolean;
+}) => {
+  const record = useRecordContext<Sale>();
+  const translate = useTranslate();
+
+  if (!record) return null;
+  if (isPending) {
+    return (
+      <span className="text-sm text-muted-foreground">
+        {translate("crm.common.loading")}
+      </span>
+    );
+  }
+
+  const contactMetrics =
+    contactMetricsBySale.get(record.id) ?? emptySaleTaskProductivity;
+  const devMetrics =
+    devMetricsBySale.get(record.id) ?? emptySaleTaskProductivity;
+
+  return (
+    <div className="flex flex-col gap-1">
+      <MetricsRow
+        label={translate("resources.sales.fields.task_performance_contact")}
+        metrics={contactMetrics}
+      />
+      <MetricsRow
+        label={translate("resources.sales.fields.task_performance_dev")}
+        metrics={devMetrics}
+      />
+    </div>
+  );
+};
+
 export function SalesList() {
   const { data: tasks, isPending: isTasksPending } = useGetList<Task>("tasks", {
     filter: {},
     pagination: { page: 1, perPage: 5000 },
     sort: { field: "id", order: "ASC" },
   });
-  const metricsBySale = useMemo(
+  const { data: devTasks, isPending: isDevTasksPending } = useGetList<DevTask>(
+    "dev_tasks",
+    {
+      filter: { "archived_at@is": null },
+      pagination: { page: 1, perPage: 5000 },
+      sort: { field: "id", order: "ASC" },
+    },
+  );
+
+  const contactMetricsBySale = useMemo(
     () => buildSaleTaskProductivityMap(tasks),
     [tasks],
+  );
+  const devMetricsBySale = useMemo(
+    () => buildSaleDevTaskProductivityMap(devTasks),
+    [devTasks],
   );
 
   return (
@@ -128,8 +172,9 @@ export function SalesList() {
         <DataTable.Col source="email" />
         <DataTable.Col label="resources.sales.fields.task_performance">
           <TaskPerformanceField
-            metricsBySale={metricsBySale}
-            isPending={isTasksPending}
+            contactMetricsBySale={contactMetricsBySale}
+            devMetricsBySale={devMetricsBySale}
+            isPending={isTasksPending || isDevTasksPending}
           />
         </DataTable.Col>
         <DataTable.Col label={false}>

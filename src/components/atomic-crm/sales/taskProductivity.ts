@@ -1,6 +1,6 @@
 import type { Identifier } from "ra-core";
 
-import type { Task } from "../types";
+import type { DevTask, Task } from "../types";
 
 export type SaleTaskProductivity = {
   assigned: number;
@@ -18,14 +18,43 @@ export const emptySaleTaskProductivity: SaleTaskProductivity = {
   completionRate: 0,
 };
 
-const isCompleted = (task: Task) => task.done_date != null;
+const isOverdueDate = (
+  dueDate: string | null | undefined,
+  completed: boolean,
+  now: Date,
+) => {
+  if (completed || !dueDate) return false;
+  return new Date(dueDate).getTime() < now.getTime();
+};
 
-const isOverdue = (task: Task, now: Date) => {
-  if (isCompleted(task) || !task.due_date) {
-    return false;
+const finalizeRates = (
+  metricsBySale: Map<Identifier, SaleTaskProductivity>,
+) => {
+  for (const metrics of metricsBySale.values()) {
+    metrics.completionRate =
+      metrics.assigned === 0
+        ? 0
+        : Math.round((metrics.completed / metrics.assigned) * 100);
   }
+};
 
-  return new Date(task.due_date).getTime() < now.getTime();
+const bumpMetrics = (
+  metricsBySale: Map<Identifier, SaleTaskProductivity>,
+  saleId: Identifier,
+  completed: boolean,
+  overdue: boolean,
+) => {
+  const metrics = metricsBySale.get(saleId) ?? {
+    ...emptySaleTaskProductivity,
+  };
+  metrics.assigned += 1;
+  if (completed) {
+    metrics.completed += 1;
+  } else {
+    metrics.pending += 1;
+    if (overdue) metrics.overdue += 1;
+  }
+  metricsBySale.set(saleId, metrics);
 };
 
 export const buildSaleTaskProductivityMap = (
@@ -36,31 +65,44 @@ export const buildSaleTaskProductivityMap = (
 
   for (const task of tasks) {
     if (task.sales_id == null) continue;
+    const completed = task.done_date != null;
+    bumpMetrics(
+      metricsBySale,
+      task.sales_id,
+      completed,
+      isOverdueDate(task.due_date, completed, now),
+    );
+  }
 
-    const metrics = metricsBySale.get(task.sales_id) ?? {
-      ...emptySaleTaskProductivity,
-    };
+  finalizeRates(metricsBySale);
+  return metricsBySale;
+};
 
-    metrics.assigned += 1;
+export const buildSaleDevTaskProductivityMap = (
+  devTasks: DevTask[] = [],
+  now: Date = new Date(),
+) => {
+  const metricsBySale = new Map<Identifier, SaleTaskProductivity>();
 
-    if (isCompleted(task)) {
-      metrics.completed += 1;
-    } else {
-      metrics.pending += 1;
-      if (isOverdue(task, now)) {
-        metrics.overdue += 1;
-      }
+  for (const task of devTasks) {
+    if (task.archived_at != null) continue;
+    const assignees =
+      task.assignee_ids && task.assignee_ids.length > 0
+        ? task.assignee_ids
+        : task.assignee_id != null
+          ? [task.assignee_id]
+          : [];
+
+    if (assignees.length === 0) continue;
+
+    const completed = task.status === "done";
+    const overdue = isOverdueDate(task.due_date, completed, now);
+
+    for (const saleId of assignees) {
+      bumpMetrics(metricsBySale, saleId, completed, overdue);
     }
-
-    metricsBySale.set(task.sales_id, metrics);
   }
 
-  for (const metrics of metricsBySale.values()) {
-    metrics.completionRate =
-      metrics.assigned === 0
-        ? 0
-        : Math.round((metrics.completed / metrics.assigned) * 100);
-  }
-
+  finalizeRates(metricsBySale);
   return metricsBySale;
 };

@@ -309,6 +309,8 @@ export const frenchCrmMessages = {
         administrator: "Admin",
         disabled: "Désactivé",
         task_performance: "Performance sur les tâches",
+        task_performance_contact: "Contact",
+        task_performance_dev: "Dev",
         assigned_tasks: "Assignées",
         completed_tasks: "Terminées",
         pending_tasks: "En cours",
