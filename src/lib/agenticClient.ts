@@ -64,24 +64,115 @@ export async function* streamSkillRun(
   }
 }
 
-export async function listSkills(): Promise<
-  Array<{
-    id: string;
-    version: string;
-    description: string;
-    model: string;
-    tools_allowed: string[];
-    rate_limit: { per_minute: number; per_hour: number };
-  }>
-> {
+export type SkillSummary = {
+  id: string;
+  version: string;
+  description: string;
+  model: string;
+  tools_allowed: string[];
+  rate_limit: { per_minute: number; per_hour: number };
+  source?: "code" | "custom";
+};
+
+async function authedFetch(path: string, init?: RequestInit) {
   const supabase = getSupabaseClient();
-  const { data: { session } } = await supabase.auth.getSession();
+  const {
+    data: { session },
+  } = await supabase.auth.getSession();
   if (!session) throw new Error("not_authenticated");
-  const res = await fetch(
-    `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/agent-runtime/skills`,
-    { headers: { "Authorization": `Bearer ${session.access_token}` } },
-  );
+  return fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1${path}`, {
+    ...init,
+    headers: {
+      Authorization: `Bearer ${session.access_token}`,
+      "Content-Type": "application/json",
+      ...(init?.headers ?? {}),
+    },
+  });
+}
+
+export async function listSkills(): Promise<SkillSummary[]> {
+  const res = await authedFetch("/agent-runtime/skills");
   if (!res.ok) throw new Error(`list_skills_failed: ${res.status}`);
   const json = await res.json();
   return json.skills ?? [];
+}
+
+export type ToolSummary = {
+  name: string;
+  description: string;
+  kind: "read" | "write";
+  cost_estimate: "low" | "medium" | "high";
+  reversible: boolean;
+};
+
+export async function listTools(): Promise<ToolSummary[]> {
+  const res = await authedFetch("/agent-runtime/tools");
+  if (!res.ok) throw new Error(`list_tools_failed: ${res.status}`);
+  const json = await res.json();
+  return json.tools ?? [];
+}
+
+export type CustomSkillRow = {
+  id: string;
+  skill_id: string;
+  version: string;
+  description: string;
+  model: string;
+  tools_allowed: string[];
+  max_iterations: number;
+  max_writes: number;
+  rate_limit: { per_minute: number; per_hour: number };
+  system_prompt: string;
+  enabled: boolean;
+  created_at: string;
+  updated_at: string;
+};
+
+export type CustomSkillPatch = Partial<
+  Omit<CustomSkillRow, "id" | "created_at" | "updated_at">
+> & {
+  skill_id?: string;
+};
+
+export async function listCustomSkills(): Promise<CustomSkillRow[]> {
+  const res = await authedFetch("/agent-runtime/custom-skills");
+  if (!res.ok) throw new Error(`list_custom_skills_failed: ${res.status}`);
+  const json = await res.json();
+  return json.skills ?? [];
+}
+
+export async function createCustomSkill(
+  body: CustomSkillPatch,
+): Promise<CustomSkillRow> {
+  const res = await authedFetch("/agent-runtime/custom-skills", {
+    method: "POST",
+    body: JSON.stringify(body),
+  });
+  if (!res.ok) {
+    const t = await res.text();
+    throw new Error(`create_custom_skill_failed: ${res.status} ${t}`);
+  }
+  return await res.json();
+}
+
+export async function updateCustomSkill(
+  id: string,
+  body: CustomSkillPatch,
+): Promise<CustomSkillRow> {
+  const res = await authedFetch(`/agent-runtime/custom-skills/${id}`, {
+    method: "PUT",
+    body: JSON.stringify(body),
+  });
+  if (!res.ok) {
+    const t = await res.text();
+    throw new Error(`update_custom_skill_failed: ${res.status} ${t}`);
+  }
+  return await res.json();
+}
+
+export async function deleteCustomSkill(id: string): Promise<void> {
+  const res = await authedFetch(`/agent-runtime/custom-skills/${id}`, {
+    method: "DELETE",
+  });
+  if (!res.ok) throw new Error(`delete_custom_skill_failed: ${res.status}`);
 }

@@ -8,7 +8,8 @@ export const helloWorldSkill: SkillManifest<Input, Output> = {
   id: "hello_world",
   version: "1.0.0",
   model: "none",
-  description: "Test skill. No LLM, no tools. Returns a greeting.",
+  description:
+    "Skill de test. Sans LLM, sans tools. Renvoie un message de bienvenue.",
   input_schema: z.object({ name: z.string().min(1).max(100) }),
   output_schema: z.object({ message: z.string() }),
   tools_allowed: [],

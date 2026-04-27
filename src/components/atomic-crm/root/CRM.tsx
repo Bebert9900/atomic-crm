@@ -36,6 +36,7 @@ import { SettingsPageMobile } from "../settings/SettingsPageMobile";
 import { ProfilePage } from "../settings/ProfilePage";
 import { SettingsPage } from "../settings/SettingsPage";
 import { EmailAccountsPage } from "../settings/EmailAccountsPage";
+import { AIProvidersPage } from "../settings/AIProvidersPage";
 import {
   CONFIGURATION_STORE_KEY,
   type ConfigurationContextValue,
@@ -65,6 +66,7 @@ import { CompanyShow } from "../companies/CompanyShow.tsx";
 import { NoteShowPage } from "../notes/NoteShowPage.tsx";
 import { TasksPage } from "../tasks/TasksPage.tsx";
 import { MyDayPage } from "../dashboard/MyDayPage.tsx";
+import AgentPage from "../agentic/AgentPage.tsx";
 
 const defaultStore = localStorageStore(undefined, "CRM");
 
@@ -273,11 +275,14 @@ const DesktopAdmin = (
         <Route path={ProfilePage.path} element={<ProfilePage />} />
         <Route path={SettingsPage.path} element={<SettingsPage />} />
         <Route path={EmailAccountsPage.path} element={<EmailAccountsPage />} />
+        <Route path={AIProvidersPage.path} element={<AIProvidersPage />} />
         <Route path={ImportPage.path} element={<ImportPage />} />
         <Route path={TasksPage.path} element={<TasksPage />} />
         <Route path={MyDayPage.path} element={<MyDayPage />} />
+        <Route path={AgentPage.path} element={<AgentPage />} />
       </CustomRoutes>
       <Resource name="deals" {...deals} />
+      <Resource name="agent_custom_skills" />
       <Resource name="dev_tasks" {...devTasks} />
       <Resource name="dev_task_labels" />
       <Resource name="contacts" {...contacts} />

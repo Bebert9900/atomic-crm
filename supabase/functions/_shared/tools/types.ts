@@ -1,5 +1,5 @@
 import type { z } from "npm:zod@^3.25";
-import type { SupabaseClient } from "npm:@supabase/supabase-js@2";
+import type { SupabaseClient } from "jsr:@supabase/supabase-js@2";
 import type { AuthInfo } from "../../agent-runtime/auth.ts";
 
 export type ToolContext = {

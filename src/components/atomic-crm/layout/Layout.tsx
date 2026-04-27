@@ -7,9 +7,12 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { useConfigurationLoader } from "../root/useConfigurationLoader";
 import { FabrikSidebar } from "./FabrikSidebar";
 import { FabrikTopBar } from "./FabrikTopBar";
+import { AgentSidebar } from "../agentic/chat/AgentSidebar";
+import { useTrackNavigation } from "@/hooks/useTrackNavigation";
 
 export const Layout = ({ children }: { children: ReactNode }) => {
   useConfigurationLoader();
+  useTrackNavigation();
   return (
     <div className="flex h-screen overflow-hidden">
       <FabrikSidebar />
@@ -26,6 +29,7 @@ export const Layout = ({ children }: { children: ReactNode }) => {
         </main>
       </div>
       <Notification />
+      <AgentSidebar />
     </div>
   );
 };

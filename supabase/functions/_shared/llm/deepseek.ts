@@ -6,7 +6,7 @@ import type {
   ToolResultEntry,
 } from "./types.ts";
 
-const apiKey = Deno.env.get("DEEPSEEK_API_KEY");
+const envApiKey = Deno.env.get("DEEPSEEK_API_KEY");
 const baseUrl = Deno.env.get("DEEPSEEK_BASE_URL") ?? "https://api.deepseek.com";
 
 // USD per 1M tokens. DeepSeek has automatic server-side cache: cache-hit input
@@ -36,7 +36,7 @@ export const deepseekProvider: LLMProvider = {
   },
 
   hasApiKey() {
-    return Boolean(apiKey);
+    return Boolean(envApiKey);
   },
 
   buildInitialMessages(userContent) {
@@ -49,8 +49,10 @@ export const deepseekProvider: LLMProvider = {
     messages,
     tools,
     maxTokens,
+    apiKey,
   }): Promise<NormalizedResponse> {
-    if (!apiKey) throw new Error("DEEPSEEK_API_KEY not configured");
+    const key = apiKey ?? envApiKey;
+    if (!key) throw new Error("DEEPSEEK_API_KEY not configured");
 
     const payload = {
       model,
@@ -73,7 +75,7 @@ export const deepseekProvider: LLMProvider = {
     const res = await fetch(`${baseUrl}/chat/completions`, {
       method: "POST",
       headers: {
-        Authorization: `Bearer ${apiKey}`,
+        Authorization: `Bearer ${key}`,
         "Content-Type": "application/json",
       },
       body: JSON.stringify(payload),

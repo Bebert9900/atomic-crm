@@ -1,7 +1,12 @@
 import type { AuthInfo } from "./auth.ts";
-import { skills } from "../_shared/skills/index.ts";
+import { loadSkillsFor } from "../_shared/skills/loader.ts";
 import type { SkillExecCtx } from "../_shared/skills/types.ts";
-import { appendTraceStep, createRun, finalizeRun } from "./runPersistence.ts";
+import {
+  appendTraceStep,
+  createRun,
+  finalizeRun,
+  makeSupabaseForUser,
+} from "./runPersistence.ts";
 import { createSSEStream, sseResponse } from "./sse.ts";
 import { runToolLoop } from "../_shared/llm/toolLoop.ts";
 import {
@@ -36,7 +41,9 @@ export async function handleRun(
     return jsonError("missing_skill_id", 400);
   }
 
-  const manifest = skills[skill_id];
+  const supa = makeSupabaseForUser(auth.token);
+  const { byId } = await loadSkillsFor(supa);
+  const manifest = byId[skill_id];
   if (!manifest) {
     return Response.json({ error: "unknown_skill", skill_id }, { status: 404 });
   }
@@ -134,10 +141,18 @@ export async function handleRun(
       dry_run,
       model: manifest.model,
       tenant_id: auth.tenantId,
+      user_id: auth.userId,
     });
   } catch (err) {
+    const msg =
+      err instanceof Error
+        ? err.message
+        : typeof err === "object" && err !== null
+          ? JSON.stringify(err)
+          : String(err);
+    console.error("create_run_failed", err);
     return Response.json(
-      { error: "create_run_failed", message: String(err) },
+      { error: "create_run_failed", message: msg },
       { status: 500 },
     );
   }

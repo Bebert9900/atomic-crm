@@ -34,7 +34,7 @@ export const morningBriefSkill: SkillManifest<
   version: "1.0.0",
   model: "claude-sonnet-4-6",
   description:
-    "Produces a concise morning briefing in French: tasks, stale deals, unread emails, recommendations.",
+    "Produit un brief matinal concis : tâches du jour, deals stagnants, mails en attente, recommandations.",
   input_schema: Input,
   output_schema: Output,
   tools_allowed: [

@@ -17,7 +17,7 @@ export const nextBestActionOnDealSkill: SkillManifest<
   version: "1.0.0",
   model: "claude-opus-4-7",
   description:
-    "Recommends the next best action for a deal based on its full history, creates follow-up tasks.",
+    "Recommande la meilleure prochaine action sur un deal en s'appuyant sur tout son historique, et crée les tâches de suivi associées.",
   input_schema: Input,
   output_schema: Output,
   tools_allowed: [

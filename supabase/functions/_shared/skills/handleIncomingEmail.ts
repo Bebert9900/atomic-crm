@@ -27,7 +27,7 @@ export const handleIncomingEmailSkill: SkillManifest<
   version: "1.0.0",
   model: "claude-opus-4-7",
   description:
-    "Classifies an incoming email, matches/creates the contact, links the email, creates follow-up tasks.",
+    "Classifie un email entrant, retrouve ou crée le contact correspondant, lie l'email et crée des tâches de suivi.",
   input_schema: Input,
   output_schema: Output,
   tools_allowed: [

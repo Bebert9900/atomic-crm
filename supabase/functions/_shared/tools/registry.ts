@@ -9,6 +9,11 @@ import * as recordings from "./recordings.ts";
 import * as emails from "./emails.ts";
 import * as tagsMod from "./tags.ts";
 import * as activity from "./activity.ts";
+import * as appointments from "./appointments.ts";
+import * as devTasks from "./dev_tasks.ts";
+import * as integrations from "./integrations.ts";
+import * as subscriptions from "./subscriptions.ts";
+import * as sessions from "./sessions.ts";
 
 function collect(mod: Record<string, unknown>): ToolDefinition[] {
   return Object.values(mod).filter(
@@ -27,6 +32,11 @@ const all: ToolDefinition[] = [
   ...collect(emails),
   ...collect(tagsMod),
   ...collect(activity),
+  ...collect(appointments),
+  ...collect(devTasks),
+  ...collect(integrations),
+  ...collect(subscriptions),
+  ...collect(sessions),
 ];
 
 export const tools: Record<string, ToolDefinition> = Object.fromEntries(

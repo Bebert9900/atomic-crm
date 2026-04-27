@@ -38,7 +38,7 @@ export const morningBriefDeepseekSkill: SkillManifest<
   version: "1.0.0",
   model: "deepseek-chat",
   description:
-    "Morning brief in French, powered by DeepSeek V3 (cheaper, comparable quality).",
+    "Brief matinal propulsé par DeepSeek V3 (moins cher, qualité comparable).",
   input_schema: Input,
   output_schema: Output,
   tools_allowed: [

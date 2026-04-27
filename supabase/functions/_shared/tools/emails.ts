@@ -164,3 +164,110 @@ export const mark_email_read: ToolDefinition = {
       .eq("id", output.id);
   },
 };
+
+export const list_email_accounts: ToolDefinition = {
+  name: "list_email_accounts",
+  description:
+    "List the email accounts the current user (sales) can send from. Use the returned id as email_account_id when calling send_email.",
+  input_schema: z.object({}),
+  output_schema: z.array(
+    z.object({
+      id: z.number(),
+      email: z.string(),
+      sales_id: z.number().nullable(),
+      is_active: z.boolean(),
+      smtp_host: z.string().nullable(),
+    }),
+  ),
+  kind: "read",
+  reversible: true,
+  cost_estimate: "low",
+  handler: async (_args, ctx) => {
+    const { data, error } = await ctx.supabase
+      .from("email_accounts")
+      .select("id,email,sales_id,is_active,smtp_host")
+      .eq("is_active", true);
+    if (error) throw error;
+    return data ?? [];
+  },
+};
+
+/**
+ * draft_email_reply produces a structured draft (no send). Useful when the
+ * agent should produce a reply for human review (default safe path) or to
+ * stage content before a separate send_email call.
+ */
+export const draft_email_reply: ToolDefinition = {
+  name: "draft_email_reply",
+  description:
+    "Produce a draft reply to an email (no send). Returns subject + text_body. The caller LLM is expected to fill these in via tool_use; this tool only echoes/persists the draft so the trace records what was prepared.",
+  input_schema: z.object({
+    in_reply_to_email_id: z.number(),
+    subject: z.string().min(1).max(300),
+    text_body: z.string().min(1).max(20_000),
+    contact_id: z.number().optional(),
+  }),
+  output_schema: z.object({
+    in_reply_to_email_id: z.number(),
+    subject: z.string(),
+    text_body: z.string(),
+    contact_id: z.number().nullable(),
+  }),
+  kind: "read",
+  reversible: true,
+  cost_estimate: "low",
+  handler: async (args, _ctx) => {
+    return {
+      in_reply_to_email_id: args.in_reply_to_email_id,
+      subject: args.subject,
+      text_body: args.text_body,
+      contact_id: args.contact_id ?? null,
+    };
+  },
+};
+
+/**
+ * send_email actually delivers via SMTP through the existing send_email_raw
+ * edge function. The user JWT is used so the edge function authorizes the
+ * caller against the email_account.sales_id.
+ */
+export const send_email: ToolDefinition = {
+  name: "send_email",
+  description:
+    "Send an outbound email via the user's configured SMTP account (calls send_email_raw). Use list_email_accounts first to pick an email_account_id you own. Provide either a reply context (in_reply_to + references) or a fresh subject. Body must be plain text (text_body). Attachments are not supported by the agent in v1.",
+  input_schema: z.object({
+    email_account_id: z.number(),
+    to: z.array(z.string().email()).min(1),
+    cc: z.array(z.string().email()).optional(),
+    bcc: z.array(z.string().email()).optional(),
+    subject: z.string().min(1).max(300),
+    text_body: z.string().min(1).max(20_000),
+    in_reply_to: z.string().optional(),
+    references: z.string().optional(),
+  }),
+  output_schema: z.object({
+    sent: z.boolean(),
+    message_id: z.string().nullable(),
+  }),
+  kind: "write",
+  reversible: false,
+  cost_estimate: "medium",
+  handler: async (args, ctx) => {
+    if (ctx.dryRun) return { sent: false, message_id: null };
+    const url = `${Deno.env.get("SUPABASE_URL")}/functions/v1/send_email_raw`;
+    const res = await fetch(url, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${ctx.auth.token}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(args),
+    });
+    if (!res.ok) {
+      const body = await res.text();
+      throw new Error(`send_email_raw ${res.status}: ${body}`);
+    }
+    const json = (await res.json()) as { message_id?: string };
+    return { sent: true, message_id: json.message_id ?? null };
+  },
+};

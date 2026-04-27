@@ -339,3 +339,146 @@ export const list_contact_recordings: ToolDefinition = {
     }));
   },
 };
+
+export const find_duplicate_contacts: ToolDefinition = {
+  name: "find_duplicate_contacts",
+  description:
+    "Find candidate duplicates of a given contact via shared email or normalized name. Returns a similarity score 0..1 (heuristic). Use before merge_contacts.",
+  input_schema: z.object({
+    contact_id: z.number(),
+    limit: z.number().int().min(1).max(20).default(5),
+  }),
+  output_schema: z.array(
+    z.object({
+      id: z.number(),
+      first_name: z.string().nullable(),
+      last_name: z.string().nullable(),
+      email: z.string().nullable(),
+      company_name: z.string().nullable(),
+      similarity: z.number(),
+      reason: z.string(),
+    }),
+  ),
+  kind: "read",
+  reversible: true,
+  cost_estimate: "medium",
+  handler: async ({ contact_id, limit }, ctx) => {
+    const { data: source, error: sErr } = await ctx.supabase
+      .from("contacts")
+      .select("id,first_name,last_name,email_jsonb,company_id")
+      .eq("id", contact_id)
+      .single();
+    if (sErr || !source) throw sErr ?? new Error("contact not found");
+    // deno-lint-ignore no-explicit-any
+    const src = source as any;
+    const emails: string[] = (src.email_jsonb ?? [])
+      // deno-lint-ignore no-explicit-any
+      .map((e: any) => (e?.email ?? "").toLowerCase())
+      .filter(Boolean);
+    const fn = (src.first_name ?? "").trim().toLowerCase();
+    const ln = (src.last_name ?? "").trim().toLowerCase();
+
+    const candidates = new Map<
+      number,
+      {
+        id: number;
+        first_name: string | null;
+        last_name: string | null;
+        email: string | null;
+        company_name: string | null;
+        similarity: number;
+        reason: string;
+      }
+    >();
+
+    if (emails.length > 0) {
+      const orExpr = emails.map((e) => `email_fts.ilike.%${e}%`).join(",");
+      const { data } = await ctx.supabase
+        .from("contacts_summary")
+        .select("id,first_name,last_name,email_fts,company_name")
+        .or(orExpr)
+        .neq("id", contact_id)
+        .limit(limit);
+      // deno-lint-ignore no-explicit-any
+      for (const r of (data ?? []) as any[]) {
+        candidates.set(r.id, {
+          id: r.id,
+          first_name: r.first_name,
+          last_name: r.last_name,
+          email: r.email_fts,
+          company_name: r.company_name,
+          similarity: 0.95,
+          reason: "shared email",
+        });
+      }
+    }
+
+    if (fn && ln) {
+      const { data } = await ctx.supabase
+        .from("contacts_summary")
+        .select("id,first_name,last_name,email_fts,company_name")
+        .ilike("first_name", `${fn}%`)
+        .ilike("last_name", `${ln}%`)
+        .neq("id", contact_id)
+        .limit(limit);
+      // deno-lint-ignore no-explicit-any
+      for (const r of (data ?? []) as any[]) {
+        if (!candidates.has(r.id)) {
+          candidates.set(r.id, {
+            id: r.id,
+            first_name: r.first_name,
+            last_name: r.last_name,
+            email: r.email_fts,
+            company_name: r.company_name,
+            similarity: 0.7,
+            reason: "name match",
+          });
+        }
+      }
+    }
+
+    return Array.from(candidates.values())
+      .sort((a, b) => b.similarity - a.similarity)
+      .slice(0, limit);
+  },
+};
+
+export const merge_contacts: ToolDefinition = {
+  name: "merge_contacts",
+  description:
+    "Merge two contacts using the existing merge_contacts edge function. winner_id keeps its primary fields; loser_id is deleted after data is folded in. NOT reversible from the agent — do not call without high confidence.",
+  input_schema: z.object({
+    winner_id: z.number(),
+    loser_id: z.number(),
+  }),
+  output_schema: z.object({
+    winner_id: z.number(),
+    loser_id: z.number(),
+    merged: z.boolean(),
+  }),
+  kind: "write",
+  reversible: false,
+  cost_estimate: "high",
+  handler: async ({ winner_id, loser_id }, ctx) => {
+    if (winner_id === loser_id) {
+      throw new Error("winner_id and loser_id must differ");
+    }
+    if (ctx.dryRun) {
+      return { winner_id, loser_id, merged: false };
+    }
+    const url = `${Deno.env.get("SUPABASE_URL")}/functions/v1/merge_contacts`;
+    const res = await fetch(url, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${ctx.auth.token}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ winner_id, loser_id }),
+    });
+    if (!res.ok) {
+      const body = await res.text();
+      throw new Error(`merge_contacts ${res.status}: ${body}`);
+    }
+    return { winner_id, loser_id, merged: true };
+  },
+};

@@ -8,8 +8,26 @@ import type {
   ToolResultEntry,
 } from "./types.ts";
 
-const apiKey = Deno.env.get("ANTHROPIC_API_KEY");
-const client = new Anthropic({ apiKey: apiKey ?? "missing" });
+const envApiKey = Deno.env.get("ANTHROPIC_API_KEY");
+const envClient = new Anthropic({ apiKey: envApiKey ?? "missing" });
+
+const OAUTH_BETA_HEADER = "oauth-2025-04-20";
+
+function clientForRequest(args: {
+  apiKey?: string;
+  oauthToken?: string;
+}): Anthropic {
+  if (args.oauthToken) {
+    return new Anthropic({
+      authToken: args.oauthToken,
+      defaultHeaders: { "anthropic-beta": OAUTH_BETA_HEADER },
+    });
+  }
+  if (args.apiKey && args.apiKey !== envApiKey) {
+    return new Anthropic({ apiKey: args.apiKey });
+  }
+  return envClient;
+}
 
 // USD per 1M tokens
 const pricing: Record<
@@ -44,8 +62,11 @@ export const anthropicProvider: LLMProvider = {
   },
 
   hasApiKey() {
-    return Boolean(apiKey);
+    return Boolean(envApiKey);
   },
+
+  // deno-lint-ignore no-explicit-any
+  _anthropicClientFor: clientForRequest as any,
 
   buildInitialMessages(userContent) {
     return [{ role: "user", content: userContent }];
@@ -57,7 +78,10 @@ export const anthropicProvider: LLMProvider = {
     messages,
     tools,
     maxTokens,
+    apiKey,
+    userOAuthToken,
   }): Promise<NormalizedResponse> {
+    const sdk = clientForRequest({ apiKey, oauthToken: userOAuthToken });
     const systemBlocks = [
       {
         type: "text" as const,
@@ -75,7 +99,7 @@ export const anthropicProvider: LLMProvider = {
     }));
 
     // deno-lint-ignore no-explicit-any
-    const response = await client.messages.create({
+    const response = await sdk.messages.create({
       model,
       system: systemBlocks,
       tools: claudeTools as any,

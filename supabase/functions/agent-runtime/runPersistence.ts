@@ -1,4 +1,4 @@
-import { createClient, type SupabaseClient } from "npm:@supabase/supabase-js@2";
+import { createClient, type SupabaseClient } from "jsr:@supabase/supabase-js@2";
 
 export function makeSupabaseForUser(userJwt: string): SupabaseClient {
   return createClient(
@@ -15,6 +15,7 @@ export type CreateRunRow = {
   dry_run: boolean;
   model?: string;
   tenant_id?: string;
+  user_id: string;
 };
 
 export async function createRun(

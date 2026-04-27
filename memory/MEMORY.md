@@ -1,0 +1,11 @@
+- [Email sync feature — real goal](project_email_sync_goal.md) — per-contact email history inside the contact page, not a full webmail
+- [Team composition and product context](project_team_context.md) — 3 personnes sales+dev, ce CRM est à double usage (interne + produit SaaS vendu), "IA suspendu" = nom d'offre SaaS pas une pause
+- [Agentic CRM — implementation status](project_agentic_status.md) — code dans /home/marieangelette/atomic-crm-agentic branche feat/agentic-foundation, 9 commits, nothing run yet
+- [Agentic CRM — known code issues](project_agentic_known_issues.md) — 12 smells identifiés en review, priorités high/med/low avant prod
+- [BMAD method — scope for this user](feedback_bmad_scope.md) — ce qui a été livré et ce qui a été volontairement omis (cérémonies, personas multiples)
+- [User collaboration preferences](feedback_user_preferences.md) — direct/honnête, mode auto quand demandé, pas de HITL, pas de framework bullshit
+- [Atomic CRM — production infrastructure](project_atomic_crm_prod_infra.md) — crm.fabrik.so sert depuis VPS 187.77.161.25 (Caddy), pas GitHub Pages. Supabase ref luibovhuvqnznucfwvym
+- [Atomic CRM — account state](project_atomic_crm_accounts.md) — qui est admin, profil Faycal en doublon (ids 3 et 5), merge proposé non exécuté
+- [Atomic CRM — features shipped 2026-04-23](project_atomic_crm_features_2026_04_23.md) — récap features session (mail inbox, calendar unified, recordings, Fait button, etc.)
+- [Deploy workflow — VPS + GitHub sync](reference_atomic_crm_deploy_workflow.md) — commandes exactes rsync+build+sync pour shipper une modif
+- [User leaks secrets in chat](feedback_user_secret_leaks.md) — pattern récurrent, toujours flagger + refuser d'utiliser

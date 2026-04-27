@@ -19,6 +19,7 @@ import type { ConfigurationContextValue } from "../../root/ConfigurationContext"
 import { ATTACHMENTS_BUCKET } from "../commons/attachments";
 import { getIsInitialized } from "./authProvider";
 import { getSupabaseClient } from "./supabase";
+import { withTracking } from "@/lib/dataProviderTracking";
 
 const getBaseDataProvider = () =>
   supabaseDataProvider({
@@ -364,10 +365,11 @@ export const getDataProvider = () => {
       "Please set the VITE_SB_PUBLISHABLE_KEY environment variable",
     );
   }
-  return withLifecycleCallbacks(
+  const wrapped = withLifecycleCallbacks(
     getDataProviderWithCustomMethods(),
     lifeCycleCallbacks,
   ) as CrmDataProvider;
+  return withTracking(wrapped) as CrmDataProvider;
 };
 
 const applyFullTextSearch = (columns: string[]) => (params: GetListParams) => {

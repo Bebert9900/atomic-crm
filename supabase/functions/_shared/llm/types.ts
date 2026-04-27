@@ -37,7 +37,7 @@ export type ToolDescriptor = {
 };
 
 export type LLMProvider = {
-  id: "anthropic" | "deepseek";
+  id: "anthropic" | "deepseek" | "openrouter";
 
   /** Whether the provider supports this model id. */
   supportsModel(model: string): boolean;
@@ -52,6 +52,14 @@ export type LLMProvider = {
     messages: unknown[];
     tools: ToolDescriptor[];
     maxTokens: number;
+    /** Optional: per-request API key (typically the user's own key, fetched
+     * from public.user_api_keys). When omitted, the provider falls back to
+     * its server env var. */
+    apiKey?: string;
+    /** Optional: per-request OAuth bearer (Anthropic only — Claude Code flow).
+     * When provided, takes precedence over apiKey and bills the user's
+     * Claude subscription quota instead of API credits. */
+    userOAuthToken?: string;
   }): Promise<NormalizedResponse>;
 
   /** Append tool results as a new user/tool message to history. */

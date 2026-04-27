@@ -1,4 +1,4 @@
-import { Import, Mail, Settings, User, Users } from "lucide-react";
+import { Import, KeyRound, Mail, Settings, User, Users } from "lucide-react";
 import { CanAccess, useTranslate, useUserMenu } from "ra-core";
 import { Link, NavLink } from "react-router";
 import { RefreshButton } from "@/components/admin/refresh-button";
@@ -9,6 +9,7 @@ import { DropdownMenuItem } from "@/components/ui/dropdown-menu";
 import { useConfigurationContext } from "../root/ConfigurationContext";
 import { ImportPage } from "../misc/ImportPage";
 import { EmailAccountsPage } from "../settings/EmailAccountsPage";
+import { AIProvidersPage } from "../settings/AIProvidersPage";
 
 const Header = () => {
   const { darkModeLogo, lightModeLogo, title } = useConfigurationContext();
@@ -79,6 +80,7 @@ const Header = () => {
               <CanAccess resource="email_accounts" action="list">
                 <EmailAccountsMenu />
               </CanAccess>
+              <AIProvidersMenu />
               <ImportFromJsonMenuItem />
             </UserMenu>
           </div>
@@ -170,6 +172,21 @@ const EmailAccountsMenu = () => {
       <Link to={EmailAccountsPage.path} className="flex items-center gap-2">
         <Mail />
         Comptes email
+      </Link>
+    </DropdownMenuItem>
+  );
+};
+
+const AIProvidersMenu = () => {
+  const userMenuContext = useUserMenu();
+  if (!userMenuContext) {
+    throw new Error("<AIProvidersMenu> must be used inside <UserMenu>");
+  }
+  return (
+    <DropdownMenuItem asChild onClick={userMenuContext.onClose}>
+      <Link to={AIProvidersPage.path} className="flex items-center gap-2">
+        <KeyRound />
+        Mes clés API IA
       </Link>
     </DropdownMenuItem>
   );

@@ -19,7 +19,7 @@ export const qualifyInboundContactSkill: SkillManifest<
   version: "1.0.0",
   model: "claude-sonnet-4-6",
   description:
-    "Qualifies a freshly-created inbound contact: attaches company, applies tags, sets background, creates first-touch task.",
+    "Qualifie un contact inbound fraîchement créé : rattache à une entreprise, applique des tags, renseigne le background et crée la tâche de premier contact.",
   input_schema: Input,
   output_schema: Output,
   tools_allowed: [
