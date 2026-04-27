@@ -6,10 +6,12 @@ import {
   Home,
   Import,
   Mail,
+  Plug,
   Settings,
   Sparkles,
   Sun,
   User,
+  UserCog,
   Users,
   Zap,
 } from "lucide-react";
@@ -244,6 +246,20 @@ export function FabrikSidebar() {
           to="/dev_tasks"
         />
         <NavItem icon={<Bot className="size-4" />} label="Agent" to="/agent" />
+
+        <CanAccess resource="configuration" action="edit">
+          <SectionLabel>Admin</SectionLabel>
+          <NavItem
+            icon={<UserCog className="size-4" />}
+            label="Utilisateurs"
+            to="/sales"
+          />
+          <NavItem
+            icon={<Plug className="size-4" />}
+            label="Intégrations"
+            to="/settings/integrations"
+          />
+        </CanAccess>
       </nav>
 
       {/* User footer */}
