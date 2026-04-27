@@ -178,6 +178,10 @@
           "type": "registry:component"
         },
         {
+          "path": "src/components/atomic-crm/settings/AIProvidersPage.tsx",
+          "type": "registry:component"
+        },
+        {
           "path": "src/components/atomic-crm/sales/useGetSalesName.ts",
           "type": "registry:component"
         },
@@ -1050,6 +1054,110 @@
           "type": "registry:component"
         },
         {
+          "path": "src/components/atomic-crm/agentic/index.ts",
+          "type": "registry:component"
+        },
+        {
+          "path": "src/components/atomic-crm/agentic/SkillsCatalog.tsx",
+          "type": "registry:component"
+        },
+        {
+          "path": "src/components/atomic-crm/agentic/SkillTestDialog.tsx",
+          "type": "registry:component"
+        },
+        {
+          "path": "src/components/atomic-crm/agentic/SkillRunsTable.tsx",
+          "type": "registry:component"
+        },
+        {
+          "path": "src/components/atomic-crm/agentic/SkillRunTrace.tsx",
+          "type": "registry:component"
+        },
+        {
+          "path": "src/components/atomic-crm/agentic/SkillRunPanel.tsx",
+          "type": "registry:component"
+        },
+        {
+          "path": "src/components/atomic-crm/agentic/SkillRunDetail.tsx",
+          "type": "registry:component"
+        },
+        {
+          "path": "src/components/atomic-crm/agentic/SkillMetricsChart.tsx",
+          "type": "registry:component"
+        },
+        {
+          "path": "src/components/atomic-crm/agentic/SkillLauncher.tsx",
+          "type": "registry:component"
+        },
+        {
+          "path": "src/components/atomic-crm/agentic/CustomSkillsPanel.tsx",
+          "type": "registry:component"
+        },
+        {
+          "path": "src/components/atomic-crm/agentic/AgenticControlsPanel.tsx",
+          "type": "registry:component"
+        },
+        {
+          "path": "src/components/atomic-crm/agentic/AgentPage.tsx",
+          "type": "registry:component"
+        },
+        {
+          "path": "src/components/atomic-crm/agentic/AgentChatFull.tsx",
+          "type": "registry:component"
+        },
+        {
+          "path": "src/components/atomic-crm/agentic/ActivityPanel.tsx",
+          "type": "registry:component"
+        },
+        {
+          "path": "src/components/atomic-crm/agentic/chat/ToolTimeline.tsx",
+          "type": "registry:component"
+        },
+        {
+          "path": "src/components/atomic-crm/agentic/chat/AnthropicConnectModal.tsx",
+          "type": "registry:component"
+        },
+        {
+          "path": "src/components/atomic-crm/agentic/chat/AgentSidebar.tsx",
+          "type": "registry:component"
+        },
+        {
+          "path": "src/components/atomic-crm/agentic/chat/blocks/types.ts",
+          "type": "registry:component"
+        },
+        {
+          "path": "src/components/atomic-crm/agentic/chat/blocks/parser.ts",
+          "type": "registry:component"
+        },
+        {
+          "path": "src/components/atomic-crm/agentic/chat/blocks/TableBlock.tsx",
+          "type": "registry:component"
+        },
+        {
+          "path": "src/components/atomic-crm/agentic/chat/blocks/MessageContent.tsx",
+          "type": "registry:component"
+        },
+        {
+          "path": "src/components/atomic-crm/agentic/chat/blocks/KanbanBlock.tsx",
+          "type": "registry:component"
+        },
+        {
+          "path": "src/components/atomic-crm/agentic/chat/blocks/FullscreenBlock.tsx",
+          "type": "registry:component"
+        },
+        {
+          "path": "src/components/atomic-crm/agentic/chat/blocks/DashboardBlock.tsx",
+          "type": "registry:component"
+        },
+        {
+          "path": "src/components/atomic-crm/agentic/chat/blocks/ApproveBlock.tsx",
+          "type": "registry:component"
+        },
+        {
+          "path": "src/components/atomic-crm/agentic/chat/blocks/ActionsBlock.tsx",
+          "type": "registry:component"
+        },
+        {
           "path": "src/components/atomic-crm/activity/ActivityLogNote.tsx",
           "type": "registry:component"
         },
@@ -1106,7 +1214,27 @@
           "type": "registry:hook"
         },
         {
+          "path": "src/hooks/useTrackNavigation.ts",
+          "type": "registry:hook"
+        },
+        {
+          "path": "src/hooks/useSkillRun.ts",
+          "type": "registry:hook"
+        },
+        {
+          "path": "src/hooks/useListSkills.ts",
+          "type": "registry:hook"
+        },
+        {
+          "path": "src/hooks/useCircuitStates.ts",
+          "type": "registry:hook"
+        },
+        {
           "path": "src/hooks/useBulkExport.tsx",
+          "type": "registry:hook"
+        },
+        {
+          "path": "src/hooks/useAgentChat.ts",
           "type": "registry:hook"
         },
         {
@@ -1114,7 +1242,27 @@
           "type": "registry:hook"
         },
         {
+          "path": "src/lib/userActionsTracker.ts",
+          "type": "registry:lib"
+        },
+        {
           "path": "src/lib/toSlug.ts",
+          "type": "registry:lib"
+        },
+        {
+          "path": "src/lib/dataProviderTracking.ts",
+          "type": "registry:lib"
+        },
+        {
+          "path": "src/lib/anthropicOAuth.ts",
+          "type": "registry:lib"
+        },
+        {
+          "path": "src/lib/aiProviders.ts",
+          "type": "registry:lib"
+        },
+        {
+          "path": "src/lib/agenticClient.ts",
           "type": "registry:lib"
         }
       ]

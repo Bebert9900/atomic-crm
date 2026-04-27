@@ -1,5 +1,14 @@
 import { useMutation } from "@tanstack/react-query";
-import { Check, CircleX, Copy, Pencil, Save } from "lucide-react";
+import {
+  ArrowRight,
+  Bot,
+  Check,
+  CircleX,
+  Copy,
+  Pencil,
+  Save,
+} from "lucide-react";
+import { Link } from "react-router";
 import {
   Form,
   useDataProvider,
@@ -232,6 +241,34 @@ const ProfileForm = ({
         </CardContent>
       </Card>
       <GoogleCalendarProfileCard />
+      <Card>
+        <CardContent>
+          <div className="flex items-start gap-3">
+            <div className="p-2 rounded-md bg-muted shrink-0">
+              <Bot className="h-5 w-5" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <h2 className="text-xl font-semibold text-muted-foreground">
+                Fournisseurs IA
+              </h2>
+              <p className="text-sm text-muted-foreground mt-1">
+                Connecte ton compte Anthropic (Claude.ai) ou colle ta clé API
+                Anthropic / DeepSeek / OpenRouter pour faire fonctionner l'agent
+                IA. Stockage chiffré, accessible uniquement par toi.
+              </p>
+            </div>
+            <Button variant="outline" size="sm" asChild>
+              <Link
+                to="/settings/ai-providers"
+                className="inline-flex items-center gap-1"
+              >
+                Configurer
+                <ArrowRight className="h-3.5 w-3.5" />
+              </Link>
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
       {import.meta.env.VITE_INBOUND_EMAIL && (
         <Card>
           <CardContent>

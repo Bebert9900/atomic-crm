@@ -1,6 +1,8 @@
 import { useState } from "react";
-import { Bot } from "lucide-react";
+import { Link } from "react-router";
+import { Bot, Settings2 } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Button } from "@/components/ui/button";
 import { AgentChatFull } from "./AgentChatFull";
 import { SkillsCatalog } from "./SkillsCatalog";
 import { CustomSkillsPanel, type CustomSkillDraft } from "./CustomSkillsPanel";
@@ -30,6 +32,15 @@ export default function AgentPage() {
       <header className="flex items-center gap-2 px-6 py-3 border-b">
         <Bot className="h-5 w-5 text-primary" />
         <h1 className="text-lg font-semibold flex-1">Agent</h1>
+        <Button variant="outline" size="sm" asChild>
+          <Link
+            to="/settings/ai-providers"
+            className="inline-flex items-center gap-1.5"
+          >
+            <Settings2 className="h-3.5 w-3.5" />
+            Configurer l'IA
+          </Link>
+        </Button>
       </header>
 
       <Tabs

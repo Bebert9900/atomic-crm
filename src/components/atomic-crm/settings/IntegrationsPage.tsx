@@ -13,6 +13,7 @@ import {
   Calendar,
   ArrowRight,
   CreditCard,
+  Bot,
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -311,6 +312,31 @@ export const IntegrationsPage = () => {
                 className="shrink-0"
               >
                 Ouvrir mon profil <ArrowRight className="h-4 w-4 ml-1" />
+              </Button>
+            </CardContent>
+          </Card>
+
+          {/* Pointer: AI providers are also per-user (BYO API keys + OAuth) */}
+          <Card className="border-dashed">
+            <CardContent className="pt-5 flex items-start gap-3">
+              <div className="p-2 rounded-md bg-muted">
+                <Bot className="h-5 w-5" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-base font-semibold">Fournisseurs IA</p>
+                <p className="text-xs text-muted-foreground">
+                  Anthropic, DeepSeek et OpenRouter sont configurés{" "}
+                  <strong>par utilisateur</strong> (clé API chiffrée ou OAuth
+                  Claude.ai). Va sur la page dédiée pour brancher ton compte.
+                </p>
+              </div>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => navigate("/settings/ai-providers")}
+                className="shrink-0"
+              >
+                Configurer <ArrowRight className="h-4 w-4 ml-1" />
               </Button>
             </CardContent>
           </Card>
