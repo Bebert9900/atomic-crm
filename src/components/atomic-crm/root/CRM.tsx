@@ -66,8 +66,9 @@ import { ContactListMobile } from "../contacts/ContactList.tsx";
 import { ContactShow } from "../contacts/ContactShow.tsx";
 import { CompanyShow } from "../companies/CompanyShow.tsx";
 import { NoteShowPage } from "../notes/NoteShowPage.tsx";
-import { TasksPage } from "../tasks/TasksPage.tsx";
 import { MyDayPage } from "../dashboard/MyDayPage.tsx";
+import AgentPage from "../agentic/AgentPage";
+import { AIProvidersPage } from "../settings/AIProvidersPage";
 
 const defaultStore = localStorageStore(undefined, "CRM");
 
@@ -277,12 +278,15 @@ const DesktopAdmin = (
         <Route path={SettingsPage.path} element={<SettingsPage />} />
         <Route path={EmailAccountsPage.path} element={<EmailAccountsPage />} />
         <Route path={IntegrationsPage.path} element={<IntegrationsPage />} />
+        <Route path={AIProvidersPage.path} element={<AIProvidersPage />} />
         <Route path={EmailInboxPage.path} element={<EmailInboxPage />} />
         <Route path={ImportPage.path} element={<ImportPage />} />
         <Route path={TasksPage.path} element={<TasksPage />} />
         <Route path={MyDayPage.path} element={<MyDayPage />} />
+        <Route path={AgentPage.path} element={<AgentPage />} />
       </CustomRoutes>
       <Resource name="deals" {...deals} />
+      <Resource name="agent_custom_skills" />
       <Resource name="dev_tasks" {...devTasks} />
       <Resource name="dev_task_labels" />
       <Resource name="contacts" {...contacts} />

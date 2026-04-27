@@ -622,6 +622,22 @@
           "type": "registry:component"
         },
         {
+          "path": "src/components/atomic-crm/finance/useStripeTreasury.ts",
+          "type": "registry:component"
+        },
+        {
+          "path": "src/components/atomic-crm/finance/treasuryFormat.ts",
+          "type": "registry:component"
+        },
+        {
+          "path": "src/components/atomic-crm/finance/TreasuryWidget.tsx",
+          "type": "registry:component"
+        },
+        {
+          "path": "src/components/atomic-crm/finance/TreasuryBanner.tsx",
+          "type": "registry:component"
+        },
+        {
           "path": "src/components/atomic-crm/filters/FilterCategory.tsx",
           "type": "registry:component"
         },
@@ -863,6 +879,10 @@
         },
         {
           "path": "src/components/atomic-crm/contacts/ContactPersonalInfo.tsx",
+          "type": "registry:component"
+        },
+        {
+          "path": "src/components/atomic-crm/contacts/ContactPayments.tsx",
           "type": "registry:component"
         },
         {

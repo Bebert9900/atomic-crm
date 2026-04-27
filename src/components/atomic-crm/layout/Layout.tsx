@@ -5,27 +5,20 @@ import { Error } from "@/components/admin/error";
 import { Skeleton } from "@/components/ui/skeleton";
 
 import { useConfigurationLoader } from "../root/useConfigurationLoader";
-import { Sidebar } from "./Sidebar";
-import { GlobalSearchBar } from "./GlobalSearchBar";
-import { CreateDropdown } from "./CreateDropdown";
+import { FabrikSidebar } from "./FabrikSidebar";
+import { FabrikTopBar } from "./FabrikTopBar";
+import { AgentSidebar } from "../agentic/chat/AgentSidebar";
+import { useTrackNavigation } from "@/hooks/useTrackNavigation";
 
 export const Layout = ({ children }: { children: ReactNode }) => {
   useConfigurationLoader();
+  useTrackNavigation();
   return (
-    <div className="flex min-h-screen">
-      <Sidebar />
-      <div className="ml-56 flex-1 flex flex-col">
-        {/* Top bar */}
-        <header className="sticky top-0 z-30 flex items-center justify-end gap-3 border-b border-border bg-background/80 backdrop-blur-sm px-6 py-2.5">
-          <GlobalSearchBar />
-          <CreateDropdown />
-        </header>
-
-        {/* Main content */}
-        <main
-          className="flex-1 overflow-y-auto px-6 py-4"
-          id="main-content"
-        >
+    <div className="flex h-screen overflow-hidden">
+      <FabrikSidebar />
+      <div className="flex-1 min-w-0 flex flex-col overflow-hidden">
+        <FabrikTopBar />
+        <main className="flex-1 overflow-auto p-4 md:p-6" id="main-content">
           <ErrorBoundary FallbackComponent={Error}>
             <Suspense
               fallback={<Skeleton className="h-12 w-12 rounded-full" />}
@@ -36,6 +29,7 @@ export const Layout = ({ children }: { children: ReactNode }) => {
         </main>
       </div>
       <Notification />
+      <AgentSidebar />
     </div>
   );
 };

@@ -6,6 +6,7 @@ import {
   type Identifier,
   type ResourceCallbacks,
 } from "ra-core";
+import { withTracking } from "@/lib/dataProviderTracking";
 import type {
   ContactNote,
   Deal,
@@ -364,10 +365,11 @@ export const getDataProvider = () => {
       "Please set the VITE_SB_PUBLISHABLE_KEY environment variable",
     );
   }
-  return withLifecycleCallbacks(
+  const wrapped = withLifecycleCallbacks(
     getDataProviderWithCustomMethods(),
     lifeCycleCallbacks,
   ) as CrmDataProvider;
+  return withTracking(wrapped) as CrmDataProvider;
 };
 
 const applyFullTextSearch = (columns: string[]) => (params: GetListParams) => {

@@ -1,4 +1,5 @@
 import {
+  Bot,
   Building2,
   Calendar,
   CheckSquare,
@@ -242,6 +243,7 @@ export function FabrikSidebar() {
           label="Dev"
           to="/dev_tasks"
         />
+        <NavItem icon={<Bot className="size-4" />} label="Agent" to="/agent" />
       </nav>
 
       {/* User footer */}
