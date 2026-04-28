@@ -26,6 +26,7 @@ import { Link } from "react-router";
 import { useConfigurationContext } from "../root/ConfigurationContext";
 import { ImportPage } from "../misc/ImportPage";
 import { EmailAccountsPage } from "../settings/EmailAccountsPage";
+import { EmailInboxPage } from "../emails/EmailInboxPage";
 import { useUserMenu } from "ra-core";
 
 function NavItem({
@@ -208,7 +209,7 @@ export function FabrikSidebar() {
         <NavItem
           icon={<Mail className="size-4" />}
           label="Mail"
-          to={EmailAccountsPage.path}
+          to={EmailInboxPage.path}
           badge={unreadCount && unreadCount > 0 ? unreadCount : undefined}
         />
         <NavItem
