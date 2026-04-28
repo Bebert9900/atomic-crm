@@ -4,16 +4,31 @@ import type { ToolDefinition } from "./types.ts";
 // Allowed action kinds — must match a tool name in the registry.
 // Keep this list narrow: only the high-stakes writes that need user validation.
 const APPROVABLE_KINDS = [
+  // deals
   "update_deal",
   "move_deal_stage",
+  // contacts
   "update_contact",
-  "update_company",
-  "send_email",
   "merge_contacts",
+  // companies
+  "update_company",
+  // notes
   "delete_note",
+  // emails
+  "send_email",
+  // appointments (visible externally, often Google-Calendar synced)
+  "create_appointment",
+  "update_appointment",
+  "cancel_appointment",
+  // dev tasks (team roadmap → visible to whole team)
+  "create_dev_task",
+  "update_dev_task",
+  "archive_dev_task",
+  // assignments
   "assign_contact_to_sale",
   "assign_deal_to_sale",
   "assign_company_to_sale",
+  "assign_task_to_sale",
 ] as const;
 
 export const request_approval: ToolDefinition = {

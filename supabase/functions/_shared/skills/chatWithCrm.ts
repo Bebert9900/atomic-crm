@@ -35,53 +35,78 @@ const Output = z.object({
 });
 
 const TOOLS_ALLOWED = [
-  // reads
+  // ─── reads ───
   "search_contacts",
   "get_contact",
+  "find_duplicate_contacts",
   "search_deals",
   "get_deal",
   "search_companies",
   "get_company",
   "search_tasks",
+  "get_task",
   "search_emails",
+  "get_email",
+  "search_appointments",
+  "get_appointment",
+  "find_free_slots",
+  "search_dev_tasks",
+  "get_dev_task",
+  "list_dev_task_labels",
   "get_recent_activity",
+  "get_posthog_activity",
+  "list_my_day",
   "list_contact_notes",
   "list_deal_notes",
   "list_contact_emails",
   "list_contact_tasks",
+  "list_contact_recordings",
   "list_company_contacts",
   "list_company_deals",
   "list_tags",
-  // safe writes
+  "list_email_accounts",
+  "list_subscriptions",
+  "get_subscription",
+  "get_recording",
+  "get_transcription",
+  // ─── safe writes (low risk, no approval needed) ───
+  "create_contact",
   "create_task",
+  "complete_task",
+  "reschedule_task",
   "add_contact_note",
   "add_deal_note",
   "create_company",
   "update_company",
   "create_tag",
+  "apply_tag",
+  "remove_tag",
   "update_note",
   "delete_note",
-  // sales / assignment
+  "mark_email_read",
+  "draft_email_reply",
+  "link_email_to_contact",
+  // ─── sales / assignment ───
   "list_sales",
   "assign_contact_to_sale",
   "assign_deal_to_sale",
   "assign_task_to_sale",
   "assign_company_to_sale",
-  // finance
+  // ─── finance ───
   "get_finance_metrics",
   "get_treasury",
   "list_recent_payments",
   "list_recent_payouts",
-  // emails (extended)
+  // ─── emails (extended) ───
   "list_email_threads",
   "get_thread",
   "move_email_folder",
   "bulk_mark_emails_read",
-  // orchestration
+  // ─── orchestration ───
   "run_skill",
-  // approval workflow (for sensitive writes via crm:approve)
+  // ─── approval workflow (for sensitive writes via crm:approve) ───
   "request_approval",
-  // proactive scheduling
+  // ─── proactive scheduling ───
   "schedule_skill_at",
   "cancel_scheduled_action",
   "list_my_scheduled_actions",
@@ -94,9 +119,10 @@ Principes :
 - Cite les entités par leur nom (contact, deal, company), pas par id.
 - Utilise les tools pour lire le CRM avant de répondre à une question factuelle.
 - Tu peux créer des tasks ou des notes quand c'est utile, mais préviens avant (courtement).
-- Pour les **updates sensibles** (changer un stage, un owner, une amount, send_email, merge, delete, réassigner…), procède en 2 étapes :
-  1) Appelle \`request_approval\` avec \`kind\` (le nom exact d'un tool comme \`update_deal\`, \`move_deal_stage\`, \`update_contact\`, \`update_company\`, \`send_email\`, \`merge_contacts\`, \`delete_note\`, \`assign_contact_to_sale\`, \`assign_deal_to_sale\`, \`assign_company_to_sale\`), \`payload\` (les arguments du tool), et un \`summary\` court.
+- Pour les **updates sensibles** (changer un stage, un owner, une amount, send_email, merge, delete, réassigner, créer/modifier/annuler un RDV, créer/modifier une tâche dev…), procède en 2 étapes :
+  1) Appelle \`request_approval\` avec \`kind\` (un de : \`update_deal\`, \`move_deal_stage\`, \`update_contact\`, \`merge_contacts\`, \`update_company\`, \`delete_note\`, \`send_email\`, \`create_appointment\`, \`update_appointment\`, \`cancel_appointment\`, \`create_dev_task\`, \`update_dev_task\`, \`archive_dev_task\`, \`assign_*_to_sale\`), \`payload\` (les arguments du tool), \`summary\` court.
   2) Émets ensuite un bloc \`crm:approve\` qui inclut \`approval_id\` (renvoyé par \`request_approval\`), un \`title\`, un \`description\`, et le \`diff\` à montrer à l'utilisateur. Quand il clique 'Valider', le backend exécute pour toi via le tool registry.
+- Pour les **actions à risque faible** (créer un contact, créer une note, créer une tâche, marquer une tâche faite, draft un mail, appliquer/retirer un tag, lier un mail à un contact, mark email read), tu peux exécuter le tool directement sans approval — utilise toujours le tool dédié (\`create_contact\`, \`complete_task\`, \`apply_tag\`, etc.) plutôt que d'émettre un bloc.
 - Tu peux émettre un bloc \`crm:actions\` (suggestions cliquables) sans approval pour les actions read-only ou très légères.
 - Si l'utilisateur consulte une fiche (contexte fourni), considère-la comme le focus par défaut.
 - Pour les demandes complexes qui mappent sur une skill métier (brief journée, revue pipeline, triage backlog dev, qualification d'un contact, brief avant RDV, détection de churn…), délègue via le tool \`run_skill\` (ex: \`morning_brief_ds\`, \`weekly_pipeline_review\`, \`triage_dev_tasks\`, \`qualify_inbound_contact\`, \`prepare_meeting_brief\`, \`detect_churn_risk\`). Max 3 délégations par tour, pas de doublon.
