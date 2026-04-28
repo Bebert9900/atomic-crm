@@ -18,6 +18,10 @@ import { detectChurnRiskSkill } from "./detectChurnRisk.ts";
 import { bulkInboxTriageSkill } from "./bulkInboxTriage.ts";
 import { enrichContactFromSignalsSkill } from "./enrichContactFromSignals.ts";
 import { suggestSkillFromSessionSkill } from "./suggestSkillFromSession.ts";
+import { preMeetingAlertSkill } from "./preMeetingAlert.ts";
+import { staleDealWatchdogSkill } from "./staleDealWatchdog.ts";
+import { autoReplyDrafterSkill } from "./autoReplyDrafter.ts";
+import { callToNoteSkill } from "./callToNote.ts";
 
 // Registry of all skills available to the agent-runtime.
 // deno-lint-ignore no-explicit-any
@@ -41,4 +45,8 @@ export const skills: Record<string, SkillManifest<any, any>> = {
   [bulkInboxTriageSkill.id]: bulkInboxTriageSkill,
   [enrichContactFromSignalsSkill.id]: enrichContactFromSignalsSkill,
   [suggestSkillFromSessionSkill.id]: suggestSkillFromSessionSkill,
+  [preMeetingAlertSkill.id]: preMeetingAlertSkill,
+  [staleDealWatchdogSkill.id]: staleDealWatchdogSkill,
+  [autoReplyDrafterSkill.id]: autoReplyDrafterSkill,
+  [callToNoteSkill.id]: callToNoteSkill,
 };

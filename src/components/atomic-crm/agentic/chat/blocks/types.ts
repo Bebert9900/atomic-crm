@@ -79,8 +79,14 @@ export type ApprovePayload = {
   description?: string;
   /** Visual list of changes shown before approval (key/before/after). */
   diff?: { field: string; before?: string | number; after: string | number }[];
-  /** Concrete action(s) to execute when user approves. */
-  action:
+  /**
+   * Server-side approval id (preferred). When present, clicking Approve calls
+   * `/agent-runtime/approvals/:id/execute` and the backend resolves + executes
+   * the action via the tool registry. The `action` field below is then ignored.
+   */
+  approval_id?: string;
+  /** Concrete action(s) to execute when user approves (legacy local fallback). */
+  action?:
     | {
         kind: "update";
         entity: "deal" | "contact" | "company" | "task";

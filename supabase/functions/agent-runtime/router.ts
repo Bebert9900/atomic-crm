@@ -14,6 +14,12 @@ import {
   handleOAuthStatus,
 } from "./oauthRoutes.ts";
 import { handleRecordActions } from "./recordActions.ts";
+import {
+  handleExecuteApproval,
+  handleListApprovals,
+  handleRejectApproval,
+} from "./approvals.ts";
+import { handleSchedulerTick } from "./scheduler.ts";
 
 export async function dispatch(req: Request): Promise<Response> {
   const url = new URL(req.url);
@@ -21,6 +27,11 @@ export async function dispatch(req: Request): Promise<Response> {
 
   if (path.endsWith("/health") && req.method === "GET") {
     return Response.json({ ok: true, ts: new Date().toISOString() });
+  }
+
+  // Scheduler tick: service-role + custom header (no user auth)
+  if (path.endsWith("/scheduler/tick") && req.method === "POST") {
+    return handleSchedulerTick(req);
   }
 
   const auth = await validateToken(req);
@@ -49,6 +60,19 @@ export async function dispatch(req: Request): Promise<Response> {
 
   if (path.endsWith("/actions") && req.method === "POST") {
     return handleRecordActions(req, auth);
+  }
+
+  // Approvals: /approvals (list), /approvals/:id/execute, /approvals/:id/reject
+  const approveExec = path.match(/\/approvals\/([0-9a-f-]{36})\/execute$/);
+  if (approveExec && req.method === "POST") {
+    return handleExecuteApproval(auth, approveExec[1]);
+  }
+  const approveReject = path.match(/\/approvals\/([0-9a-f-]{36})\/reject$/);
+  if (approveReject && req.method === "POST") {
+    return handleRejectApproval(auth, approveReject[1]);
+  }
+  if (path.endsWith("/approvals") && req.method === "GET") {
+    return handleListApprovals(auth);
   }
 
   if (path.endsWith("/oauth/anthropic/exchange") && req.method === "POST") {

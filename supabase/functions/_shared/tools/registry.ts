@@ -14,6 +14,10 @@ import * as devTasks from "./dev_tasks.ts";
 import * as integrations from "./integrations.ts";
 import * as subscriptions from "./subscriptions.ts";
 import * as sessions from "./sessions.ts";
+import * as salesMod from "./sales.ts";
+import * as financeMod from "./finance.ts";
+import * as approvalsMod from "./approvals.ts";
+import * as schedulerMod from "./scheduler.ts";
 import { runSkillTool } from "./skills_run.ts";
 
 function collect(mod: Record<string, unknown>): ToolDefinition[] {
@@ -38,6 +42,10 @@ const all: ToolDefinition[] = [
   ...collect(integrations),
   ...collect(subscriptions),
   ...collect(sessions),
+  ...collect(salesMod),
+  ...collect(financeMod),
+  approvalsMod.request_approval,
+  ...collect(schedulerMod),
   runSkillTool,
 ];
 

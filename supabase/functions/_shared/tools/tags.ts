@@ -25,6 +25,55 @@ export const list_tags: ToolDefinition = {
   },
 };
 
+const TAG_COLOR_PALETTE = [
+  "#eddcd2",
+  "#fff1e6",
+  "#fde2e4",
+  "#fad2e1",
+  "#c5dedd",
+  "#dbe7e4",
+  "#f0efeb",
+  "#d6e2e9",
+  "#bcd4e6",
+  "#99c1de",
+];
+
+export const create_tag: ToolDefinition = {
+  name: "create_tag",
+  description:
+    "Crée un nouveau tag. Si la couleur n'est pas fournie, choisit une couleur de la palette CRM.",
+  input_schema: z.object({
+    name: z.string().min(1).max(50),
+    color: z.string().optional(),
+  }),
+  output_schema: z.object({
+    id: z.number(),
+    name: z.string(),
+    color: z.string(),
+  }),
+  kind: "write",
+  reversible: true,
+  cost_estimate: "low",
+  handler: async ({ name, color }, ctx) => {
+    const { data: existing } = await ctx.supabase
+      .from("tags")
+      .select("id,name,color")
+      .ilike("name", name)
+      .maybeSingle();
+    if (existing) return existing;
+    const finalColor =
+      color ??
+      TAG_COLOR_PALETTE[Math.floor(Math.random() * TAG_COLOR_PALETTE.length)];
+    const { data, error } = await ctx.supabase
+      .from("tags")
+      .insert({ name, color: finalColor })
+      .select("id,name,color")
+      .single();
+    if (error) throw error;
+    return data;
+  },
+};
+
 export const apply_tag: ToolDefinition = {
   name: "apply_tag",
   description:

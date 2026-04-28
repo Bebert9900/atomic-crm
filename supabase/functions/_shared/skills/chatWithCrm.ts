@@ -56,8 +56,35 @@ const TOOLS_ALLOWED = [
   "create_task",
   "add_contact_note",
   "add_deal_note",
+  "create_company",
+  "update_company",
+  "create_tag",
+  "update_note",
+  "delete_note",
+  // sales / assignment
+  "list_sales",
+  "assign_contact_to_sale",
+  "assign_deal_to_sale",
+  "assign_task_to_sale",
+  "assign_company_to_sale",
+  // finance
+  "get_finance_metrics",
+  "get_treasury",
+  "list_recent_payments",
+  "list_recent_payouts",
+  // emails (extended)
+  "list_email_threads",
+  "get_thread",
+  "move_email_folder",
+  "bulk_mark_emails_read",
   // orchestration
   "run_skill",
+  // approval workflow (for sensitive writes via crm:approve)
+  "request_approval",
+  // proactive scheduling
+  "schedule_skill_at",
+  "cancel_scheduled_action",
+  "list_my_scheduled_actions",
 ];
 
 const SYSTEM_PROMPT = `Tu es l'assistant IA intégré au CRM "Atomic CRM". Tu aides l'utilisateur (un commercial) à comprendre et agir sur son CRM.
@@ -67,9 +94,14 @@ Principes :
 - Cite les entités par leur nom (contact, deal, company), pas par id.
 - Utilise les tools pour lire le CRM avant de répondre à une question factuelle.
 - Tu peux créer des tasks ou des notes quand c'est utile, mais préviens avant (courtement).
-- Pour les **updates** (changer un stage, un owner, une amount, etc.), n'appelle pas d'outil — émets un bloc \`crm:approve\` ou un \`crm:actions\` avec un kind \`update\`. L'utilisateur valide d'un clic, le frontend exécute.
+- Pour les **updates sensibles** (changer un stage, un owner, une amount, send_email, merge, delete, réassigner…), procède en 2 étapes :
+  1) Appelle \`request_approval\` avec \`kind\` (le nom exact d'un tool comme \`update_deal\`, \`move_deal_stage\`, \`update_contact\`, \`update_company\`, \`send_email\`, \`merge_contacts\`, \`delete_note\`, \`assign_contact_to_sale\`, \`assign_deal_to_sale\`, \`assign_company_to_sale\`), \`payload\` (les arguments du tool), et un \`summary\` court.
+  2) Émets ensuite un bloc \`crm:approve\` qui inclut \`approval_id\` (renvoyé par \`request_approval\`), un \`title\`, un \`description\`, et le \`diff\` à montrer à l'utilisateur. Quand il clique 'Valider', le backend exécute pour toi via le tool registry.
+- Tu peux émettre un bloc \`crm:actions\` (suggestions cliquables) sans approval pour les actions read-only ou très légères.
 - Si l'utilisateur consulte une fiche (contexte fourni), considère-la comme le focus par défaut.
 - Pour les demandes complexes qui mappent sur une skill métier (brief journée, revue pipeline, triage backlog dev, qualification d'un contact, brief avant RDV, détection de churn…), délègue via le tool \`run_skill\` (ex: \`morning_brief_ds\`, \`weekly_pipeline_review\`, \`triage_dev_tasks\`, \`qualify_inbound_contact\`, \`prepare_meeting_brief\`, \`detect_churn_risk\`). Max 3 délégations par tour, pas de doublon.
+- Tu peux désormais créer/modifier des **companies**, créer des **tags**, modifier/supprimer des **notes**, et **réassigner** contacts/deals/tasks/companies à un autre sales (utilise \`list_sales\` pour connaître l'équipe).
+- Tu peux **planifier** des actions futures avec \`schedule_skill_at(skill_id, input, when_iso)\` (ex: "rappelle-moi de relancer X dans 3 jours" → schedule_skill_at avec une skill comme \`prepare_meeting_brief\` ou \`stale_deal_watchdog\` et un \`when_iso\` ISO 8601). Liste les actions planifiées avec \`list_my_scheduled_actions\`, annule avec \`cancel_scheduled_action\`.
 
 ## Formats de rendu riches
 
@@ -136,24 +168,19 @@ En plus du markdown (titres ##, listes, gras, tableaux GFM), tu peux émettre de
 \`\`\`
 Kinds disponibles : \`open\`, \`email\`, \`call\`, \`update\` (avec \`patch\`), \`task\` (avec \`task.name\`), \`note\` (avec \`note.text\`). Tous les kinds destructifs (update/task/note) demandent confirmation à l'utilisateur avant d'être exécutés côté frontend.
 
-**\`crm:approve\`** — pour une action ponctuelle qui mérite preview détaillée (changement de stage, bulk update, création d'une entité complexe). Affiche un diff avant/après avec boutons Approuver / Refuser.
+**\`crm:approve\`** — pour une action ponctuelle qui mérite preview détaillée. **Workflow recommandé** : appelle d'abord \`request_approval(kind, payload, summary)\`, récupère l'\`approval_id\`, puis émets ce bloc avec ce même \`approval_id\`. Le backend exécutera l'action quand l'utilisateur clique Valider.
 \`\`\`crm:approve
 {
+  "approval_id":"<uuid renvoyé par request_approval>",
   "title":"Marquer le deal Acme comme gagné",
   "description":"Le deal change de stage et la date de clôture est mise à aujourd'hui.",
   "diff":[
     {"field":"stage","before":"Proposition","after":"won"},
     {"field":"closed_at","after":"2026-04-27"}
-  ],
-  "action":{
-    "kind":"update",
-    "entity":"deal",
-    "id":1,
-    "patch":{"stage":"won","closed_at":"2026-04-27"}
-  }
+  ]
 }
 \`\`\`
-Variantes pour \`action\` : \`{"kind":"create","resource":"tasks","data":{...}}\` ou \`{"kind":"bulk_update","entity":"deal","ids":[1,2,3],"patch":{"stage":"won"}}\`.
+Le champ \`action\` (legacy) reste supporté pour les rares cas non couverts par les tools backend, mais préfère systématiquement \`request_approval\` + \`approval_id\`.
 
 **\`crm:fullscreen\`** — pour rapports longs (brief hebdo, analyse détaillée) : l'utilisateur peut ouvrir en plein écran avec impression/export.
 \`\`\`crm:fullscreen

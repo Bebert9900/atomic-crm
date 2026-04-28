@@ -271,3 +271,199 @@ export const send_email: ToolDefinition = {
     return { sent: true, message_id: json.message_id ?? null };
   },
 };
+
+function canonicalizeSubject(s: string | null): string {
+  if (!s) return "";
+  return s
+    .replace(/^(?:\s*(?:re|fw|fwd|tr)\s*:\s*)+/gi, "")
+    .trim()
+    .toLowerCase();
+}
+
+export const list_email_threads: ToolDefinition = {
+  name: "list_email_threads",
+  description:
+    "Liste les threads d'emails (groupés par sujet canonique + contact). Retourne le dernier message de chaque thread + count.",
+  input_schema: z.object({
+    contact_id: z.number().int().optional(),
+    unread_only: z.boolean().optional(),
+    days: z.number().int().min(1).max(180).default(30),
+    limit: z.number().int().min(1).max(50).default(20),
+  }),
+  output_schema: z.array(
+    z.object({
+      canonical_subject: z.string(),
+      contact_id: z.number().nullable(),
+      latest_id: z.number(),
+      latest_subject: z.string().nullable(),
+      latest_from: z.string().nullable(),
+      latest_date: z.string(),
+      message_count: z.number(),
+      unread_count: z.number(),
+    }),
+  ),
+  kind: "read",
+  reversible: true,
+  cost_estimate: "low",
+  handler: async ({ contact_id, unread_only, days, limit }, ctx) => {
+    const since = new Date(Date.now() - days * 86400_000).toISOString();
+    let q = ctx.supabase
+      .from("email_messages")
+      .select("id,subject,from_email,date,is_read,contact_id")
+      .gte("date", since)
+      .order("date", { ascending: false })
+      .limit(500);
+    if (contact_id) q = q.eq("contact_id", contact_id);
+    if (unread_only) q = q.eq("is_read", false);
+    const { data, error } = await q;
+    if (error) throw error;
+    const rows = (data ?? []) as Array<{
+      id: number;
+      subject: string | null;
+      from_email: string | null;
+      date: string;
+      is_read: boolean;
+      contact_id: number | null;
+    }>;
+    const byKey = new Map<
+      string,
+      {
+        canonical_subject: string;
+        contact_id: number | null;
+        latest_id: number;
+        latest_subject: string | null;
+        latest_from: string | null;
+        latest_date: string;
+        message_count: number;
+        unread_count: number;
+      }
+    >();
+    for (const m of rows) {
+      const cs = canonicalizeSubject(m.subject);
+      const key = `${cs}::${m.contact_id ?? "_"}`;
+      const cur = byKey.get(key);
+      if (!cur) {
+        byKey.set(key, {
+          canonical_subject: cs,
+          contact_id: m.contact_id,
+          latest_id: m.id,
+          latest_subject: m.subject,
+          latest_from: m.from_email,
+          latest_date: m.date,
+          message_count: 1,
+          unread_count: m.is_read ? 0 : 1,
+        });
+      } else {
+        cur.message_count++;
+        if (!m.is_read) cur.unread_count++;
+        if (m.date > cur.latest_date) {
+          cur.latest_id = m.id;
+          cur.latest_subject = m.subject;
+          cur.latest_from = m.from_email;
+          cur.latest_date = m.date;
+        }
+      }
+    }
+    const list = [...byKey.values()]
+      .sort((a, b) => (a.latest_date < b.latest_date ? 1 : -1))
+      .slice(0, limit);
+    return list;
+  },
+};
+
+export const get_thread: ToolDefinition = {
+  name: "get_thread",
+  description:
+    "Récupère tous les messages d'un thread (même sujet canonique + même contact). Trié chronologiquement.",
+  input_schema: z.object({
+    canonical_subject: z.string().min(1),
+    contact_id: z.number().int().nullable().optional(),
+    limit: z.number().int().min(1).max(100).default(50),
+  }),
+  output_schema: z.array(
+    z.object({
+      id: z.number(),
+      subject: z.string().nullable(),
+      from_email: z.string().nullable(),
+      from_name: z.string().nullable(),
+      to_emails: z.unknown().nullable(),
+      date: z.string(),
+      is_read: z.boolean(),
+      text_body: z.string().nullable(),
+    }),
+  ),
+  kind: "read",
+  reversible: true,
+  cost_estimate: "low",
+  handler: async ({ canonical_subject, contact_id, limit }, ctx) => {
+    let q = ctx.supabase
+      .from("email_messages")
+      .select(
+        "id,subject,from_email,from_name,to_emails,date,is_read,text_body",
+      )
+      .order("date", { ascending: true })
+      .limit(limit);
+    if (contact_id !== undefined && contact_id !== null) {
+      q = q.eq("contact_id", contact_id);
+    }
+    const { data, error } = await q;
+    if (error) throw error;
+    const rows = (data ?? []) as Array<{
+      subject: string | null;
+      [k: string]: unknown;
+    }>;
+    return rows
+      .filter((r) => canonicalizeSubject(r.subject) === canonical_subject)
+      .map((r) => ({
+        ...r,
+        text_body:
+          typeof r.text_body === "string" && r.text_body.length > 4000
+            ? r.text_body.slice(0, 4000) + "…"
+            : (r.text_body ?? null),
+      }));
+  },
+};
+
+export const move_email_folder: ToolDefinition = {
+  name: "move_email_folder",
+  description:
+    "Déplace un email vers un autre dossier IMAP (ex: 'Archive', 'Trash', 'INBOX').",
+  input_schema: z.object({
+    id: z.number().int(),
+    folder: z.string().min(1).max(120),
+  }),
+  output_schema: z.object({ id: z.number(), folder: z.string() }),
+  kind: "write",
+  reversible: true,
+  cost_estimate: "low",
+  handler: async ({ id, folder }, ctx) => {
+    const { error } = await ctx.supabase
+      .from("email_messages")
+      .update({ folder })
+      .eq("id", id);
+    if (error) throw error;
+    return { id, folder };
+  },
+};
+
+export const bulk_mark_emails_read: ToolDefinition = {
+  name: "bulk_mark_emails_read",
+  description:
+    "Marque plusieurs emails comme lus (ou non lus). Plafonné à 100 ids par appel.",
+  input_schema: z.object({
+    ids: z.array(z.number().int()).min(1).max(100),
+    is_read: z.boolean().default(true),
+  }),
+  output_schema: z.object({ updated: z.number() }),
+  kind: "write",
+  reversible: true,
+  cost_estimate: "low",
+  handler: async ({ ids, is_read }, ctx) => {
+    const { error, count } = await ctx.supabase
+      .from("email_messages")
+      .update({ is_read }, { count: "exact" })
+      .in("id", ids);
+    if (error) throw error;
+    return { updated: count ?? ids.length };
+  },
+};

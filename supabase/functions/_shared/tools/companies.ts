@@ -85,6 +85,103 @@ export const list_company_deals: ToolDefinition = {
   },
 };
 
+export const create_company: ToolDefinition = {
+  name: "create_company",
+  description:
+    "Crée une company. Champs requis: name. Optionnels: sector, size, website, description, linkedin_url, phone_number, address, city, country, sales_id, lead_source.",
+  input_schema: z.object({
+    name: z.string().min(1),
+    sector: z.string().optional(),
+    size: z.number().int().optional(),
+    website: z.string().optional(),
+    description: z.string().optional(),
+    linkedin_url: z.string().optional(),
+    phone_number: z.string().optional(),
+    address: z.string().optional(),
+    city: z.string().optional(),
+    country: z.string().optional(),
+    sales_id: z.number().int().optional(),
+    lead_source: z.string().optional(),
+  }),
+  output_schema: z.object({
+    id: z.number(),
+    name: z.string(),
+  }),
+  kind: "write",
+  reversible: true,
+  cost_estimate: "low",
+  handler: async (args, ctx) => {
+    const payload: Record<string, unknown> = {
+      name: args.name,
+      lead_source: args.lead_source ?? "agent",
+    };
+    for (const k of [
+      "sector",
+      "size",
+      "website",
+      "description",
+      "linkedin_url",
+      "phone_number",
+      "address",
+      "city",
+      "country",
+      "sales_id",
+    ] as const) {
+      if (args[k] !== undefined) payload[k] = args[k];
+    }
+    const { data, error } = await ctx.supabase
+      .from("companies")
+      .insert(payload)
+      .select("id,name")
+      .single();
+    if (error) throw error;
+    return data;
+  },
+};
+
+export const update_company: ToolDefinition = {
+  name: "update_company",
+  description:
+    "Met à jour une company. Au moins un champ doit être fourni en plus de id.",
+  input_schema: z.object({
+    id: z.number().int(),
+    name: z.string().optional(),
+    sector: z.string().optional(),
+    size: z.number().int().nullable().optional(),
+    website: z.string().nullable().optional(),
+    description: z.string().nullable().optional(),
+    linkedin_url: z.string().nullable().optional(),
+    phone_number: z.string().nullable().optional(),
+    address: z.string().nullable().optional(),
+    city: z.string().nullable().optional(),
+    country: z.string().nullable().optional(),
+    sales_id: z.number().int().nullable().optional(),
+  }),
+  output_schema: z.object({
+    id: z.number(),
+    name: z.string(),
+  }),
+  kind: "write",
+  reversible: true,
+  cost_estimate: "low",
+  handler: async ({ id, ...patch }, ctx) => {
+    const cleaned = Object.fromEntries(
+      Object.entries(patch).filter(([, v]) => v !== undefined),
+    );
+    if (Object.keys(cleaned).length === 0) {
+      throw new Error("update_company: no field to update");
+    }
+    const { data, error } = await ctx.supabase
+      .from("companies")
+      .update(cleaned)
+      .eq("id", id)
+      .select("id,name")
+      .single();
+    if (error) throw error;
+    return data;
+  },
+};
+
 export const list_company_contacts: ToolDefinition = {
   name: "list_company_contacts",
   description: "List contacts belonging to a company.",

@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useDataProvider, useNotify } from "ra-core";
 import { Check, Loader2, ShieldCheck, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { getSupabaseClient } from "@/components/atomic-crm/providers/supabase/supabase";
 import type { ApprovePayload } from "./types";
 
 export function ApproveBlock({ payload }: { payload: ApprovePayload }) {
@@ -16,7 +17,37 @@ export function ApproveBlock({ payload }: { payload: ApprovePayload }) {
     setState("applying");
     setError(null);
     try {
+      // Preferred path: server-side approval. Backend executes via tool registry.
+      if (payload.approval_id) {
+        const supabase = getSupabaseClient();
+        const {
+          data: { session },
+        } = await supabase.auth.getSession();
+        if (!session) throw new Error("not_authenticated");
+        const res = await fetch(
+          `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/agent-runtime/approvals/${payload.approval_id}/execute`,
+          {
+            method: "POST",
+            headers: {
+              Authorization: `Bearer ${session.access_token}`,
+              "Content-Type": "application/json",
+            },
+          },
+        );
+        if (!res.ok) {
+          const body = await res.text().catch(() => "");
+          throw new Error(`HTTP ${res.status}: ${body.slice(0, 300)}`);
+        }
+        setState("done");
+        notify("Action appliquée", { type: "success" });
+        return;
+      }
+
+      // Legacy fallback: action executed locally via dataProvider
       const a = payload.action;
+      if (!a) {
+        throw new Error("approve_block_missing_action");
+      }
       if (a.kind === "update") {
         const resource = a.entity === "company" ? "companies" : `${a.entity}s`;
         const previous = await dataProvider
@@ -44,6 +75,29 @@ export function ApproveBlock({ payload }: { payload: ApprovePayload }) {
       setError(msg);
       notify(`Erreur : ${msg}`, { type: "error" });
     }
+  };
+
+  const reject = async () => {
+    if (payload.approval_id) {
+      try {
+        const supabase = getSupabaseClient();
+        const {
+          data: { session },
+        } = await supabase.auth.getSession();
+        if (session) {
+          await fetch(
+            `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/agent-runtime/approvals/${payload.approval_id}/reject`,
+            {
+              method: "POST",
+              headers: { Authorization: `Bearer ${session.access_token}` },
+            },
+          );
+        }
+      } catch {
+        // Best-effort: still mark UI as done locally.
+      }
+    }
+    setState("done");
   };
 
   return (
@@ -93,12 +147,7 @@ export function ApproveBlock({ payload }: { payload: ApprovePayload }) {
       <div className="flex items-center justify-end gap-2 px-3 py-2">
         {state === "pending" && (
           <>
-            <Button
-              size="sm"
-              variant="ghost"
-              onClick={() => setState("done")}
-              title="Refuser"
-            >
+            <Button size="sm" variant="ghost" onClick={reject} title="Refuser">
               <X className="h-4 w-4 mr-1" />
               Refuser
             </Button>
