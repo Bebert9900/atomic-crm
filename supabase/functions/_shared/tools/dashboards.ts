@@ -166,7 +166,7 @@ export const get_my_kpis: ToolDefinition = {
 export const list_integrations: ToolDefinition = {
   name: "list_integrations",
   description:
-    "Liste les intégrations CRM activées et leur statut (Google Calendar, Stripe, PostHog, BillionMail, etc.). Pour 'est-ce que mon Google Calendar est branché ?'",
+    "Liste les intégrations CRM (Google Calendar, Stripe, PostHog, BillionMail) avec leur statut RÉEL : enabled (toggle UI), config_status (empty | partial | complete), operational (true seulement si toggle ON ET tous les champs remplis). ATTENTION : une intégration peut avoir enabled=true mais des valeurs de config vides — utilise operational pour savoir si elle marche vraiment.",
   input_schema: z.object({}),
   output_schema: z.array(
     z.object({
@@ -174,6 +174,10 @@ export const list_integrations: ToolDefinition = {
       enabled: z.boolean(),
       updated_at: z.string().nullable(),
       config_keys: z.array(z.string()),
+      filled_keys: z.array(z.string()),
+      empty_keys: z.array(z.string()),
+      config_status: z.enum(["empty", "partial", "complete"]),
+      operational: z.boolean(),
     }),
   ),
   kind: "read",
@@ -187,13 +191,42 @@ export const list_integrations: ToolDefinition = {
     if (error) throw error;
     return (data ?? []).map(
       // deno-lint-ignore no-explicit-any
-      (r: any) => ({
-        id: r.id,
-        enabled: r.enabled,
-        updated_at: r.updated_at,
-        config_keys:
-          r.config && typeof r.config === "object" ? Object.keys(r.config) : [],
-      }),
+      (r: any) => {
+        const cfg =
+          r.config && typeof r.config === "object"
+            ? (r.config as Record<string, unknown>)
+            : {};
+        const allKeys = Object.keys(cfg);
+        const filled = allKeys.filter((k) => {
+          const v = cfg[k];
+          if (v === null || v === undefined) return false;
+          if (typeof v === "string" && v.trim() === "") return false;
+          if (Array.isArray(v) && v.length === 0) return false;
+          if (
+            typeof v === "object" &&
+            !Array.isArray(v) &&
+            Object.keys(v as object).length === 0
+          ) {
+            return false;
+          }
+          return true;
+        });
+        const empty = allKeys.filter((k) => !filled.includes(k));
+        let status: "empty" | "partial" | "complete";
+        if (allKeys.length === 0 || filled.length === 0) status = "empty";
+        else if (filled.length === allKeys.length) status = "complete";
+        else status = "partial";
+        return {
+          id: r.id,
+          enabled: r.enabled,
+          updated_at: r.updated_at,
+          config_keys: allKeys,
+          filled_keys: filled,
+          empty_keys: empty,
+          config_status: status,
+          operational: r.enabled && status === "complete",
+        };
+      },
     );
   },
 };
