@@ -16,6 +16,7 @@ const APPROVABLE_KINDS = [
   "delete_note",
   // emails
   "send_email",
+  "bulk_move_emails",
   // appointments (visible externally, often Google-Calendar synced)
   "create_appointment",
   "update_appointment",

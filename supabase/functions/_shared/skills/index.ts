@@ -22,6 +22,7 @@ import { preMeetingAlertSkill } from "./preMeetingAlert.ts";
 import { staleDealWatchdogSkill } from "./staleDealWatchdog.ts";
 import { autoReplyDrafterSkill } from "./autoReplyDrafter.ts";
 import { callToNoteSkill } from "./callToNote.ts";
+import { inboxCleanupProposalSkill } from "./inboxCleanupProposal.ts";
 
 // Registry of all skills available to the agent-runtime.
 // deno-lint-ignore no-explicit-any
@@ -49,4 +50,5 @@ export const skills: Record<string, SkillManifest<any, any>> = {
   [staleDealWatchdogSkill.id]: staleDealWatchdogSkill,
   [autoReplyDrafterSkill.id]: autoReplyDrafterSkill,
   [callToNoteSkill.id]: callToNoteSkill,
+  [inboxCleanupProposalSkill.id]: inboxCleanupProposalSkill,
 };

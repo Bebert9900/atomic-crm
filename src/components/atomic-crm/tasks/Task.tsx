@@ -24,6 +24,10 @@ import { useConfigurationContext } from "../root/ConfigurationContext";
 import type { Contact, Sale, Task as TData } from "../types";
 import { TaskEdit } from "./TaskEdit";
 import { TaskEditSheet } from "./TaskEditSheet";
+import {
+  TaskAgentApprovalActions,
+  extractApprovalId,
+} from "./TaskAgentApprovalActions";
 import { useIsMobile } from "@/hooks/use-mobile";
 
 export const Task = ({
@@ -121,22 +125,25 @@ export const Task = ({
                   &nbsp;
                 </>
               )}
-              {task.text}
+              {(task.text ?? "")
+                .replace(/\[agent_approval:[0-9a-f-]{36}\]/i, "")
+                .trim()}
             </div>
+            {(() => {
+              const approvalId = extractApprovalId(task.text);
+              if (!approvalId || task.done_date) return null;
+              return (
+                <TaskAgentApprovalActions task={task} approvalId={approvalId} />
+              );
+            })()}
             <div className="text-sm text-muted-foreground">
               {translate("resources.tasks.fields.due_short")}
               &nbsp;
               <DateField source="due_date" record={task} showDate showTime />
               {task.sales_id == null ? (
-                <>
-                  {" "}
-                  · {translate("resources.tasks.unassigned")}
-                </>
+                <> · {translate("resources.tasks.unassigned")}</>
               ) : task.sales_id === identity?.id ? (
-                <>
-                  {" "}
-                  · {translate("resources.tasks.assigned_to_you")}
-                </>
+                <> · {translate("resources.tasks.assigned_to_you")}</>
               ) : (
                 <ReferenceField<TData, Sale>
                   source="sales_id"

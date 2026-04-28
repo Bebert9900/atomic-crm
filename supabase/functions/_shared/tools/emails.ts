@@ -488,6 +488,31 @@ export const list_unread_emails: ToolDefinition = {
   },
 };
 
+export const bulk_move_emails: ToolDefinition = {
+  name: "bulk_move_emails",
+  description:
+    "Déplace plusieurs emails vers un dossier (ex: 'Junk', 'Marketing', 'Archive'). Plafonné à 200 ids par appel. Usage typique via request_approval pour ranger les mails marketing en bulk.",
+  input_schema: z.object({
+    ids: z.array(z.number().int()).min(1).max(200),
+    folder: z.string().min(1).max(120),
+  }),
+  output_schema: z.object({
+    moved: z.number(),
+    folder: z.string(),
+  }),
+  kind: "write",
+  reversible: true,
+  cost_estimate: "low",
+  handler: async ({ ids, folder }, ctx) => {
+    const { error, count } = await ctx.supabase
+      .from("email_messages")
+      .update({ folder }, { count: "exact" })
+      .in("id", ids);
+    if (error) throw error;
+    return { moved: count ?? ids.length, folder };
+  },
+};
+
 export const bulk_mark_emails_read: ToolDefinition = {
   name: "bulk_mark_emails_read",
   description:
