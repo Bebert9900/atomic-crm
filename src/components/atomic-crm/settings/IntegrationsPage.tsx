@@ -289,57 +289,63 @@ export const IntegrationsPage = () => {
         <p className="text-sm text-muted-foreground p-4">Chargement…</p>
       ) : (
         <div className="flex flex-col gap-4 max-w-2xl">
-          {/* Pointer: Google Calendar is handled per-user via Supabase linkIdentity */}
-          <Card className="border-dashed">
-            <CardContent className="pt-5 flex items-start gap-3">
-              <div className="p-2 rounded-md bg-muted">
-                <Calendar className="h-5 w-5" />
-              </div>
-              <div className="flex-1 min-w-0">
-                <p className="text-base font-semibold">Google Calendar</p>
-                <p className="text-xs text-muted-foreground">
-                  L'intégration Google est maintenant gérée par utilisateur. Va
-                  sur ta <strong>fiche profil</strong> (sidebar bas-gauche →
-                  avatar) pour lier ton propre compte Google. Les prérequis
-                  admin (Google Cloud + Supabase Dashboard) sont détaillés dans
-                  la carte Google Calendar du profil.
-                </p>
-              </div>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => navigate("/profile")}
-                className="shrink-0"
-              >
-                Ouvrir mon profil <ArrowRight className="h-4 w-4 ml-1" />
-              </Button>
-            </CardContent>
-          </Card>
+          <PointerCardWithTutorial
+            icon={Calendar}
+            title="Google Calendar"
+            subtitle="Connexion par utilisateur (synchronisation des RDV avec ton agenda)"
+            ctaLabel="Ouvrir mon profil"
+            onCta={() => navigate("/profile")}
+            steps={[
+              {
+                title: "1. Prérequis admin (à faire une seule fois)",
+                body: "Supabase Dashboard → Authentication → Providers → Google : activer + coller le Client ID + Client Secret d'un projet Google Cloud OAuth. Scopes Google Cloud à autoriser : email, profile, openid, https://www.googleapis.com/auth/calendar. Ajouter https://luibovhuvqnznucfwvym.supabase.co/auth/v1/callback comme redirect URI dans Google Cloud Console.",
+              },
+              {
+                title: "2. Connecter son compte (chaque sales)",
+                body: "Avatar en bas de la sidebar → Profil → carte Google Calendar → bouton « Connecter mon Google Calendar ». Approuver les permissions calendrier. Le token est stocké côté Supabase et accessible aux edge functions du CRM.",
+              },
+              {
+                title: "3. Vérification",
+                body: "Dans le profil, le badge passe à « Lié à mon@email.com ». Côté DB, une row apparaît dans user_oauth_tokens pour le provider 'google'. Si vide → la connexion n'a pas abouti.",
+              },
+              {
+                title: "4. Quand ça marche",
+                body: "Les RDV créés dans le CRM ont un google_event_id et apparaissent dans Google Calendar. La carte d'agenda dans /my-day pull les events des prochains 7 jours du calendrier perso.",
+              },
+            ]}
+          />
 
-          {/* Pointer: AI providers are also per-user (BYO API keys + OAuth) */}
-          <Card className="border-dashed">
-            <CardContent className="pt-5 flex items-start gap-3">
-              <div className="p-2 rounded-md bg-muted">
-                <Bot className="h-5 w-5" />
-              </div>
-              <div className="flex-1 min-w-0">
-                <p className="text-base font-semibold">Fournisseurs IA</p>
-                <p className="text-xs text-muted-foreground">
-                  Anthropic, DeepSeek et OpenRouter sont configurés{" "}
-                  <strong>par utilisateur</strong> (clé API chiffrée ou OAuth
-                  Claude.ai). Va sur la page dédiée pour brancher ton compte.
-                </p>
-              </div>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => navigate("/settings/ai-providers")}
-                className="shrink-0"
-              >
-                Configurer <ArrowRight className="h-4 w-4 ml-1" />
-              </Button>
-            </CardContent>
-          </Card>
+          <PointerCardWithTutorial
+            icon={Bot}
+            title="Fournisseurs IA (Anthropic / DeepSeek / OpenRouter)"
+            subtitle="Configuration par utilisateur — détermine quel modèle anime l'agent du CRM"
+            ctaLabel="Configurer"
+            onCta={() => navigate("/settings/ai-providers")}
+            steps={[
+              {
+                title:
+                  "Option A — DeepSeek (recommandé pour démarrer, le moins cher)",
+                body: "1) Aller sur platform.deepseek.com → s'inscrire. 2) API Keys → Create new API key (commence par sk-). 3) Recharger 5-10 € de crédit (deepseek-chat = 0.27 $ / 1M tokens en input). 4) Dans le CRM → /settings/ai-providers → onglet DeepSeek → coller la clé → Modèle = deepseek-chat → Enregistrer. ⚠️ NE PAS choisir deepseek-reasoner (incompat tools).",
+              },
+              {
+                title:
+                  "Option B — Anthropic via OAuth Claude.ai (sans clé API)",
+                body: "1) /settings/ai-providers → onglet Anthropic → bouton « Connecter mon compte Claude.ai ». 2) Approuver l'OAuth. 3) Le token apparaît dans user_oauth_tokens (provider = anthropic). Avantage : pas de clé à gérer, quotas suivent ton compte Claude.ai. Inconvénient : limites de taux plus serrées qu'une clé API directe.",
+              },
+              {
+                title: "Option C — Anthropic via API key (production sérieuse)",
+                body: "1) console.anthropic.com → API Keys → Create Key. 2) /settings/ai-providers → onglet Anthropic → coller la clé. 3) Modèle = claude-sonnet-4-6 ou claude-opus-4-7 selon budget.",
+              },
+              {
+                title: "Option D — OpenRouter (pour tester d'autres modèles)",
+                body: "openrouter.ai → API Keys → Create. Coller dans /settings/ai-providers. Permet GPT-4o, Llama, Gemini etc via une seule facture.",
+              },
+              {
+                title: "Choix du provider actif",
+                body: "Le chat de l'agent utilise dans cet ordre : 1) clé Anthropic si présente, 2) OAuth Anthropic, 3) DeepSeek, 4) OpenRouter. Pour forcer un provider précis, configurer uniquement celui-là.",
+              },
+            ]}
+          />
 
           {INTEGRATIONS.map((def) => (
             <IntegrationCard
@@ -366,6 +372,77 @@ export const IntegrationsPage = () => {
 
 IntegrationsPage.path = "/settings/integrations";
 
+function PointerCardWithTutorial({
+  icon: Icon,
+  title,
+  subtitle,
+  ctaLabel,
+  onCta,
+  steps,
+}: {
+  icon: React.ComponentType<{ className?: string }>;
+  title: string;
+  subtitle: string;
+  ctaLabel: string;
+  onCta: () => void;
+  steps: { title: string; body: string | React.ReactNode }[];
+}) {
+  const [helpOpen, setHelpOpen] = useState(false);
+  return (
+    <Card className="border-dashed">
+      <CardContent className="pt-5 flex flex-col gap-3">
+        <div className="flex items-start gap-3">
+          <div className="p-2 rounded-md bg-muted">
+            <Icon className="h-5 w-5" />
+          </div>
+          <div className="flex-1 min-w-0">
+            <p className="text-base font-semibold">{title}</p>
+            <p className="text-xs text-muted-foreground">{subtitle}</p>
+          </div>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={onCta}
+            className="shrink-0"
+          >
+            {ctaLabel} <ArrowRight className="h-4 w-4 ml-1" />
+          </Button>
+        </div>
+
+        <div className="rounded-md border border-dashed border-border bg-muted/30">
+          <button
+            type="button"
+            onClick={() => setHelpOpen((v) => !v)}
+            className="w-full flex items-center justify-between gap-2 px-3 py-2 text-xs font-medium"
+          >
+            <span className="flex items-center gap-1.5">
+              <HelpCircle className="h-3.5 w-3.5" />
+              Tutoriel pas à pas
+            </span>
+            {helpOpen ? (
+              <ChevronUp className="h-3.5 w-3.5" />
+            ) : (
+              <ChevronDown className="h-3.5 w-3.5" />
+            )}
+          </button>
+          {helpOpen && (
+            <ol className="px-4 pb-3 pt-1 flex flex-col gap-2">
+              {steps.map((step, idx) => (
+                <li key={idx} className="text-xs">
+                  <p className="font-medium">{step.title}</p>
+                  <p className="text-muted-foreground whitespace-pre-line">
+                    {step.body}
+                  </p>
+                </li>
+              ))}
+            </ol>
+          )}
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
 function IntegrationCard({
   def,
   row,
@@ -379,13 +456,26 @@ function IntegrationCard({
   const Icon = def.icon;
   const [enabled, setEnabled] = useState(row?.enabled ?? false);
   const [saving, setSaving] = useState(false);
-  const [helpOpen, setHelpOpen] = useState(false);
   const [values, setValues] = useState<Record<string, string>>(() =>
     emptyValues(def, row),
   );
   const [dirtySecrets, setDirtySecrets] = useState<Record<string, boolean>>({});
 
   const configured = useMemo(() => isConfigured(def, row), [def, row]);
+
+  // Auto-open the tutorial section when the integration is not yet configured.
+  // Once configured, leave it collapsed (the user can re-open if needed).
+  const [helpOpen, setHelpOpen] = useState(!configured);
+  useEffect(() => {
+    if (!configured) setHelpOpen(true);
+  }, [configured]);
+
+  const filledFieldCount = def.fields.filter((f) => {
+    if (f.readOnly) return false;
+    const v = row?.config?.[f.key];
+    return typeof v === "string" && v.trim().length > 0;
+  }).length;
+  const totalFieldCount = def.fields.filter((f) => !f.readOnly).length;
 
   const handleChange = (key: string, value: string, isSecret: boolean) => {
     setValues((prev) => ({ ...prev, [key]: value }));
@@ -446,7 +536,10 @@ function IntegrationCard({
                   <Check className="h-3 w-3" /> Configuré
                 </Badge>
               ) : (
-                <Badge variant="outline">Non configuré</Badge>
+                <Badge variant="outline" className="gap-1">
+                  <AlertTriangle className="h-3 w-3 text-amber-500" />
+                  {filledFieldCount}/{totalFieldCount} champs renseignés
+                </Badge>
               )}
             </div>
             <p className="text-xs text-muted-foreground">{def.subtitle}</p>
@@ -471,7 +564,7 @@ function IntegrationCard({
           >
             <span className="flex items-center gap-1.5">
               <HelpCircle className="h-3.5 w-3.5" />
-              Comment obtenir les clés
+              Tutoriel pas à pas
             </span>
             {helpOpen ? (
               <ChevronUp className="h-3.5 w-3.5" />
