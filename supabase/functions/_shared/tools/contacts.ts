@@ -55,19 +55,25 @@ export const search_contacts: ToolDefinition = {
 export const get_contact: ToolDefinition = {
   name: "get_contact",
   description:
-    "Get a contact with emails, phones, tags, company link, background.",
+    "Get a full contact record (identity, emails, phones, owner sales_id, linkedin, gender, newsletter, first/last_seen, tags, background).",
   input_schema: z.object({ id: z.number() }),
   output_schema: z.object({
     id: z.number(),
     first_name: z.string().nullable(),
     last_name: z.string().nullable(),
+    gender: z.string().nullable(),
     title: z.string().nullable(),
     company_id: z.number().nullable(),
+    sales_id: z.number().nullable(),
     email_jsonb: z.array(z.unknown()).nullable(),
     phone_jsonb: z.array(z.unknown()).nullable(),
+    linkedin_url: z.string().nullable(),
+    has_newsletter: z.boolean().nullable(),
     tags: z.array(z.number()).nullable(),
     background: z.string().nullable(),
     status: z.string().nullable(),
+    first_seen: z.string().nullable(),
+    last_seen: z.string().nullable(),
     lead_source: z.string(),
   }),
   kind: "read",
@@ -77,7 +83,7 @@ export const get_contact: ToolDefinition = {
     const { data, error } = await ctx.supabase
       .from("contacts")
       .select(
-        "id,first_name,last_name,title,company_id,email_jsonb,phone_jsonb,tags,background,status,lead_source",
+        "id,first_name,last_name,gender,title,company_id,sales_id,email_jsonb,phone_jsonb,linkedin_url,has_newsletter,tags,background,status,first_seen,last_seen,lead_source",
       )
       .eq("id", id)
       .single();
@@ -228,6 +234,128 @@ export const list_contact_tasks: ToolDefinition = {
     const { data, error } = await q;
     if (error) throw error;
     return data ?? [];
+  },
+};
+
+export const list_contact_plans: ToolDefinition = {
+  name: "list_contact_plans",
+  description:
+    "Liste les plans SaaS associés à un contact (table contact_plans : nom, type, statut, score de complétion).",
+  input_schema: z.object({
+    contact_id: z.number().int(),
+    limit: z.number().int().min(1).max(50).default(20),
+  }),
+  output_schema: z.array(
+    z.object({
+      id: z.number(),
+      saas_plan_id: z.string().nullable(),
+      name: z.string().nullable(),
+      plan_type: z.string().nullable(),
+      status: z.string().nullable(),
+      completion_score: z.number().nullable(),
+      created_at: z.string().nullable(),
+      updated_at: z.string().nullable(),
+    }),
+  ),
+  kind: "read",
+  reversible: true,
+  cost_estimate: "low",
+  handler: async ({ contact_id, limit }, ctx) => {
+    const { data, error } = await ctx.supabase
+      .from("contact_plans")
+      .select(
+        "id,saas_plan_id,name,plan_type,status,completion_score,created_at,updated_at",
+      )
+      .eq("contact_id", contact_id)
+      .order("updated_at", { ascending: false })
+      .limit(limit);
+    if (error) throw error;
+    return data ?? [];
+  },
+};
+
+export const list_contact_video_conferences: ToolDefinition = {
+  name: "list_contact_video_conferences",
+  description:
+    "Liste les visioconférences enregistrées d'un contact (titre, durée, provider, date, présence d'une transcription).",
+  input_schema: z.object({
+    contact_id: z.number().int(),
+    limit: z.number().int().min(1).max(50).default(20),
+  }),
+  output_schema: z.array(
+    z.object({
+      id: z.number(),
+      title: z.string().nullable(),
+      provider: z.string().nullable(),
+      duration_minutes: z.number().nullable(),
+      recorded_at: z.string().nullable(),
+      has_transcription: z.boolean(),
+      sales_id: z.number().nullable(),
+    }),
+  ),
+  kind: "read",
+  reversible: true,
+  cost_estimate: "low",
+  handler: async ({ contact_id, limit }, ctx) => {
+    const { data, error } = await ctx.supabase
+      .from("video_conferences")
+      .select(
+        "id,title,provider,duration_minutes,recorded_at,sales_id,transcription",
+      )
+      .eq("contact_id", contact_id)
+      .order("recorded_at", { ascending: false })
+      .limit(limit);
+    if (error) throw error;
+    return (data ?? []).map(
+      // deno-lint-ignore no-explicit-any
+      (r: any) => ({
+        id: r.id,
+        title: r.title,
+        provider: r.provider,
+        duration_minutes: r.duration_minutes,
+        recorded_at: r.recorded_at,
+        sales_id: r.sales_id,
+        has_transcription:
+          typeof r.transcription === "string" && r.transcription.length > 0,
+      }),
+    );
+  },
+};
+
+export const get_video_conference: ToolDefinition = {
+  name: "get_video_conference",
+  description:
+    "Récupère une visioconférence avec sa transcription complète (tronquée à 6000 chars).",
+  input_schema: z.object({ id: z.number().int() }),
+  output_schema: z.object({
+    id: z.number(),
+    title: z.string().nullable(),
+    contact_id: z.number().nullable(),
+    company_id: z.number().nullable(),
+    provider: z.string().nullable(),
+    url: z.string().nullable(),
+    duration_minutes: z.number().nullable(),
+    recorded_at: z.string().nullable(),
+    transcription: z.string().nullable(),
+    notes: z.string().nullable(),
+  }),
+  kind: "read",
+  reversible: true,
+  cost_estimate: "low",
+  handler: async ({ id }, ctx) => {
+    const { data, error } = await ctx.supabase
+      .from("video_conferences")
+      .select(
+        "id,title,contact_id,company_id,provider,url,duration_minutes,recorded_at,transcription,notes",
+      )
+      .eq("id", id)
+      .single();
+    if (error) throw error;
+    const r = data as { transcription: string | null; [k: string]: unknown };
+    if (typeof r.transcription === "string" && r.transcription.length > 6000) {
+      r.transcription = r.transcription.slice(0, 6000) + "…";
+    }
+    return r;
   },
 };
 
