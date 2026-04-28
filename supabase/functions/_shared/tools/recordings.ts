@@ -1,6 +1,56 @@
 import { z } from "npm:zod@^3.25";
 import type { ToolDefinition } from "./types.ts";
 
+export const search_recordings: ToolDefinition = {
+  name: "search_recordings",
+  description:
+    "Recherche globale d'enregistrements d'appels (par sales, par fenêtre temporelle, par sentiment ou par chaleur).",
+  input_schema: z.object({
+    sales_id: z.number().int().optional(),
+    contact_id: z.number().int().optional(),
+    days: z.number().int().min(1).max(365).default(30),
+    sentiment: z.string().optional(),
+    warmth_label: z.string().optional(),
+    limit: z.number().int().min(1).max(50).default(20),
+  }),
+  output_schema: z.array(
+    z.object({
+      id: z.number(),
+      contact_id: z.number().nullable(),
+      sales_id: z.number().nullable(),
+      duration_seconds: z.number().nullable(),
+      sentiment: z.string().nullable(),
+      warmth_label: z.string().nullable(),
+      summary: z.string().nullable(),
+      created_at: z.string(),
+    }),
+  ),
+  kind: "read",
+  reversible: true,
+  cost_estimate: "low",
+  handler: async (
+    { sales_id, contact_id, days, sentiment, warmth_label, limit },
+    ctx,
+  ) => {
+    const since = new Date(Date.now() - days * 86400_000).toISOString();
+    let q = ctx.supabase
+      .from("contact_recordings")
+      .select(
+        "id,contact_id,sales_id,duration_seconds,sentiment,warmth_label,summary,created_at",
+      )
+      .gte("created_at", since)
+      .order("created_at", { ascending: false })
+      .limit(limit);
+    if (sales_id !== undefined) q = q.eq("sales_id", sales_id);
+    if (contact_id !== undefined) q = q.eq("contact_id", contact_id);
+    if (sentiment) q = q.eq("sentiment", sentiment);
+    if (warmth_label) q = q.eq("warmth_label", warmth_label);
+    const { data, error } = await q;
+    if (error) throw error;
+    return data ?? [];
+  },
+};
+
 export const get_recording: ToolDefinition = {
   name: "get_recording",
   description:

@@ -3,10 +3,13 @@ import type { ToolDefinition } from "./types.ts";
 
 export const search_companies: ToolDefinition = {
   name: "search_companies",
-  description: "Search companies by name or sector.",
+  description:
+    "Search companies (vue companies_summary qui inclut nb_deals/nb_contacts) — filtres : query (nom), sector, country, sales_id (account owner).",
   input_schema: z.object({
     query: z.string().optional(),
     sector: z.string().optional(),
+    country: z.string().optional(),
+    sales_id: z.number().int().optional(),
     limit: z.number().int().min(1).max(50).default(10),
   }),
   output_schema: z.array(
@@ -15,7 +18,12 @@ export const search_companies: ToolDefinition = {
       name: z.string(),
       sector: z.string().nullable(),
       size: z.number().nullable(),
-      lead_source: z.string(),
+      country: z.string().nullable(),
+      city: z.string().nullable(),
+      sales_id: z.number().nullable(),
+      nb_deals: z.number().nullable(),
+      nb_contacts: z.number().nullable(),
+      revenue: z.string().nullable(),
     }),
   ),
   kind: "read",
@@ -23,11 +31,15 @@ export const search_companies: ToolDefinition = {
   cost_estimate: "low",
   handler: async (args, ctx) => {
     let q = ctx.supabase
-      .from("companies")
-      .select("id,name,sector,size,lead_source")
+      .from("companies_summary")
+      .select(
+        "id,name,sector,size,country,city,sales_id,nb_deals,nb_contacts,revenue",
+      )
       .limit(args.limit);
     if (args.query) q = q.ilike("name", `%${args.query}%`);
     if (args.sector) q = q.eq("sector", args.sector);
+    if (args.country) q = q.eq("country", args.country);
+    if (args.sales_id) q = q.eq("sales_id", args.sales_id);
     const { data, error } = await q;
     if (error) throw error;
     return data ?? [];

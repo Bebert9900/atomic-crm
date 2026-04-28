@@ -446,6 +446,48 @@ export const move_email_folder: ToolDefinition = {
   },
 };
 
+export const list_unread_emails: ToolDefinition = {
+  name: "list_unread_emails",
+  description:
+    "Liste agrégée des emails non lus (vue unread_emails_summary, déjà jointe avec contact + account). Pour 'combien j'ai de mails à traiter' ou 'mes mails non lus'.",
+  input_schema: z.object({
+    sales_id: z.number().int().optional(),
+    contact_id: z.number().int().optional(),
+    limit: z.number().int().min(1).max(100).default(30),
+  }),
+  output_schema: z.array(
+    z.object({
+      id: z.number(),
+      subject: z.string().nullable(),
+      from_email: z.string().nullable(),
+      from_name: z.string().nullable(),
+      date: z.string(),
+      contact_id: z.number().nullable(),
+      contact_first_name: z.string().nullable(),
+      contact_last_name: z.string().nullable(),
+      sales_id: z.number().nullable(),
+      account_email: z.string().nullable(),
+    }),
+  ),
+  kind: "read",
+  reversible: true,
+  cost_estimate: "low",
+  handler: async ({ sales_id, contact_id, limit }, ctx) => {
+    let q = ctx.supabase
+      .from("unread_emails_summary")
+      .select(
+        "id,subject,from_email,from_name,date,contact_id,contact_first_name,contact_last_name,sales_id,account_email",
+      )
+      .order("date", { ascending: false })
+      .limit(limit);
+    if (sales_id !== undefined) q = q.eq("sales_id", sales_id);
+    if (contact_id !== undefined) q = q.eq("contact_id", contact_id);
+    const { data, error } = await q;
+    if (error) throw error;
+    return data ?? [];
+  },
+};
+
 export const bulk_mark_emails_read: ToolDefinition = {
   name: "bulk_mark_emails_read",
   description:

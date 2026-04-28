@@ -8,6 +8,8 @@ export const search_contacts: ToolDefinition = {
   input_schema: z.object({
     query: z.string().optional(),
     company_id: z.number().optional(),
+    sales_id: z.number().optional(),
+    status: z.string().optional(),
     tag_ids: z.array(z.number()).optional(),
     updated_since: z.string().datetime().optional(),
     limit: z.number().int().min(1).max(50).default(10),
@@ -20,6 +22,10 @@ export const search_contacts: ToolDefinition = {
       email: z.string().nullable(),
       company_name: z.string().nullable(),
       last_seen: z.string().nullable(),
+      status: z.string().nullable(),
+      sales_id: z.number().nullable(),
+      nb_tasks: z.number().nullable(),
+      nb_unread_emails: z.number().nullable(),
     }),
   ),
   kind: "read",
@@ -28,7 +34,9 @@ export const search_contacts: ToolDefinition = {
   handler: async (args, ctx) => {
     let q = ctx.supabase
       .from("contacts_summary")
-      .select("id, first_name, last_name, email_fts, company_name, last_seen")
+      .select(
+        "id, first_name, last_name, email_fts, company_name, last_seen, status, sales_id, nb_tasks, nb_unread_emails, tags",
+      )
       .limit(args.limit);
     if (args.query) {
       const p = `%${args.query}%`;
@@ -37,6 +45,11 @@ export const search_contacts: ToolDefinition = {
       );
     }
     if (args.company_id) q = q.eq("company_id", args.company_id);
+    if (args.sales_id) q = q.eq("sales_id", args.sales_id);
+    if (args.status) q = q.eq("status", args.status);
+    if (args.tag_ids && args.tag_ids.length) {
+      q = q.overlaps("tags", args.tag_ids);
+    }
     if (args.updated_since) q = q.gte("last_seen", args.updated_since);
     const { data, error } = await q;
     if (error) throw error;
@@ -48,6 +61,10 @@ export const search_contacts: ToolDefinition = {
       email: r.email_fts,
       company_name: r.company_name,
       last_seen: r.last_seen,
+      status: r.status,
+      sales_id: r.sales_id,
+      nb_tasks: r.nb_tasks,
+      nb_unread_emails: r.nb_unread_emails,
     }));
   },
 };
