@@ -16,6 +16,7 @@ import * as subscriptions from "./subscriptions.ts";
 import * as sessions from "./sessions.ts";
 import * as salesMod from "./sales.ts";
 import * as financeMod from "./finance.ts";
+import * as timelineMod from "./timeline.ts";
 import * as approvalsMod from "./approvals.ts";
 import * as schedulerMod from "./scheduler.ts";
 import { runSkillTool } from "./skills_run.ts";
@@ -44,6 +45,7 @@ const all: ToolDefinition[] = [
   ...collect(sessions),
   ...collect(salesMod),
   ...collect(financeMod),
+  ...collect(timelineMod),
   approvalsMod.request_approval,
   ...collect(schedulerMod),
   runSkillTool,

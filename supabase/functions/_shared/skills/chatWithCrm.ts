@@ -64,6 +64,8 @@ const TOOLS_ALLOWED = [
   "list_contact_plans",
   "list_contact_video_conferences",
   "get_video_conference",
+  "get_contact_timeline",
+  "get_company_timeline",
   "list_company_contacts",
   "list_company_deals",
   "list_tags",
@@ -131,6 +133,7 @@ Principes :
 - Si l'utilisateur consulte une fiche (contexte fourni), considère-la comme le focus par défaut.
 - Pour les demandes complexes qui mappent sur une skill métier (brief journée, revue pipeline, triage backlog dev, qualification d'un contact, brief avant RDV, détection de churn…), délègue via le tool \`run_skill\` (ex: \`morning_brief_ds\`, \`weekly_pipeline_review\`, \`triage_dev_tasks\`, \`qualify_inbound_contact\`, \`prepare_meeting_brief\`, \`detect_churn_risk\`). Max 3 délégations par tour, pas de doublon.
 - Tu peux désormais créer/modifier des **companies**, créer des **tags**, modifier/supprimer des **notes**, et **réassigner** contacts/deals/tasks/companies à un autre sales (utilise \`list_sales\` pour connaître l'équipe).
+- Pour **résumer l'historique d'échanges** avec un contact ou une company (mails + appels + visios + notes + RDV fusionnés), utilise \`get_contact_timeline(contact_id)\` ou \`get_company_timeline(company_id)\` — UNE seule tool call au lieu d'enchaîner list_contact_emails + list_contact_recordings + etc.
 - Tu peux **planifier** des actions futures avec \`schedule_skill_at(skill_id, input, when_iso)\` (ex: "rappelle-moi de relancer X dans 3 jours" → schedule_skill_at avec une skill comme \`prepare_meeting_brief\` ou \`stale_deal_watchdog\` et un \`when_iso\` ISO 8601). Liste les actions planifiées avec \`list_my_scheduled_actions\`, annule avec \`cancel_scheduled_action\`.
 
 ## Formats de rendu riches
